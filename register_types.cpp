@@ -3,7 +3,10 @@
 #include "core/object/class_db.h"
 #include "core/config/engine.h"
 
-#include "rendering_weaver.h"
+#include "src/rendering_weaver.h"
+#include "src/frame_weaver.h"
+#include "src/resources/weaver_web.h"
+#include "src/resources/weaver_node_compositor.h"
 
 
 static RenderingWeaver *_weaver = nullptr;
@@ -18,7 +21,13 @@ void initialize_godot_weave_rd_module(ModuleInitializationLevel p_level)
 		return;
 	}
 
-
+	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE)
+	{
+		ClassDB::register_class<WeaverNodeCompositor>();
+		ClassDB::register_class<WeaverWeb>();
+		ClassDB::register_class<FrameWeaver>();
+		return;
+	}
 }
 
 void uninitialize_godot_weave_rd_module(ModuleInitializationLevel p_level)

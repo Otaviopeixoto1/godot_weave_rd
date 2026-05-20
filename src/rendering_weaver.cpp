@@ -1,6 +1,8 @@
 #include "rendering_weaver.h"
 #include "core/object/class_db.h"
 
+
+
 RenderingWeaver *RenderingWeaver::singleton = nullptr;
 
 RenderingWeaver *RenderingWeaver::get_singleton()
@@ -15,8 +17,7 @@ void RenderingWeaver::_bind_methods()
 
 void RenderingWeaver::add(int value)
 {
-	this->value += value;
-	print_line(this->value);
+	print_line(value);
 }
 
 RenderingWeaver::RenderingWeaver()
