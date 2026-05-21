@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/object/object.h"
+#include "modules/gdscript/gdscript.h"
 
 // Central manager class for all WeaverWebs .
 //TODO: Define WeaverPass as the framegraph pass 
@@ -40,6 +41,9 @@ class RenderingWeaver : public Object
 private:
 	static RenderingWeaver *singleton;
 
+	// A script implementing the method used for hooking into the CompositorEffect _render_callback in WeaverWebNodes.
+	// THIS IS A FALLBACK SOLUTION since godot doesnt expose the _render_callback to modules yet...
+	Ref<GDScript> weaver_node_script; 
 protected:
 	static void _bind_methods();
 	void add(int value);
@@ -47,4 +51,6 @@ protected:
 public:
 	RenderingWeaver();
 	static RenderingWeaver *get_singleton();
+
+	Ref<GDScript> get_weaver_node_script();
 };

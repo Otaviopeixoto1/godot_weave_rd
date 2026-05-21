@@ -11,10 +11,10 @@ void WeaverWeb::_notification(int p_what)
 	}
 }
 
-void WeaverWeb::_bind_methods() {
+void WeaverWeb::_bind_methods()
+{
 	ClassDB::bind_method(D_METHOD("set_weaver_compositors", "weaver_compositors"), &WeaverWeb::set_weaver_compositors);
 	ClassDB::bind_method(D_METHOD("get_weaver_compositors"), &WeaverWeb::get_weaver_compositors);
-
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "weaver_compositors", PROPERTY_HINT_ARRAY_TYPE, MAKE_RESOURCE_TYPE_HINT("WeaverWebCompositor")), "set_weaver_compositors", "get_weaver_compositors");
 }
 
