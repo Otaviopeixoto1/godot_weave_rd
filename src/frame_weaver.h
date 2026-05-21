@@ -25,8 +25,26 @@ class FrameWeaver : public Node
 	//
 	//
 	//  A single web can spawn several viewports on the scene. This would only support a single scene setup but it should work well for now
-	//		
+	//	-The current design also removes the possibility of multiple viewports from different scenes having to be accounted for...
+	//  -It also allows for easy reordering between viewports wich can be good since godot RenderGraph might not reorder them (?)
 	//
+	// --> THERE IS A MASSIVE PROBLEM: IF USER ADDS CUSTOM NODES TO SCENE, WHENEVER THE GRAPH GETS EDITED, ALL OF THEM ARE DELETED
+	// ---- Locking nodes through node.set_meta("_edit_lock_", true) really doesnt work so well...
+	//
+	//
+	// --------> Another Idea: The user creates nodes on the scene and then registers them to the WeaverWeb resource...
+	// ---------- Node references in the scene are not stable ! (nodepaths are the more stable solution but they break too easy...)
+	//
+	//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	// --------> Best Idea: Make FrameWeaver connect to its parent viewport and check if the camera has weaver_node_compositor assigned. If so then we compile the graph.
+	// ---------- Register all active FrameWeavers to RenderingWeaver (Server) at runtime and dynamically compile dependencies
+	// ---------- We must match Each WeaverWeb (from FrameWeaver) with active WeaverWebCompositors (from Camera3D/WorldEnvironment)
+	// ---------- Make the plugin compile the scene only once and allow for easily assigning WeaverWebCompositors
+	//
+	// There are some implicit guarantees: There can be only one compositor (WeaverWebCompositor) per camera on the scene. These will be isolated nodes on the WeaverWeb.
+	// We can compile WeaverWebCompositors statically and then the whole Web can be connected at runtime through signals between resources
+	// 
+	//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 protected:
 	void _notification(int p_what);

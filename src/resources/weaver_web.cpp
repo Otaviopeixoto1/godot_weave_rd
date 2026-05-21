@@ -12,10 +12,10 @@ void WeaverWeb::_notification(int p_what)
 }
 
 void WeaverWeb::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_weaver_nodes", "weaver_nodes"), &WeaverWeb::set_weaver_nodes);
-	ClassDB::bind_method(D_METHOD("get_weaver_nodes"), &WeaverWeb::get_weaver_nodes);
+	ClassDB::bind_method(D_METHOD("set_weaver_compositors", "weaver_compositors"), &WeaverWeb::set_weaver_compositors);
+	ClassDB::bind_method(D_METHOD("get_weaver_compositors"), &WeaverWeb::get_weaver_compositors);
 
-	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "weaver_nodes", PROPERTY_HINT_ARRAY_TYPE, MAKE_RESOURCE_TYPE_HINT("WeaverNodeCompositor")), "set_weaver_nodes", "get_weaver_nodes");
+	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "weaver_compositors", PROPERTY_HINT_ARRAY_TYPE, MAKE_RESOURCE_TYPE_HINT("WeaverWebCompositor")), "set_weaver_compositors", "get_weaver_compositors");
 }
 
 
@@ -24,18 +24,18 @@ WeaverWeb::WeaverWeb()
 	print_line("WEAVERWEB CONSTRUCT");
 }
 
-void WeaverWeb::set_weaver_nodes(const TypedArray<WeaverNodeCompositor> &p_weaver_nodes)
+void WeaverWeb::set_weaver_compositors(const TypedArray<WeaverWebCompositor> &p_weaver_compositors)
 {
 	//Array effect_rids;
-	weaver_nodes.clear();
+	weaver_compositors.clear();
 
-	for (int i = 0; i < p_weaver_nodes.size(); i++)
+	for (int i = 0; i < p_weaver_compositors.size(); i++)
 	{
 		// Cast to proper ref, if our object isn't a CompositorEffect resource this will be an empty Ref.
-		Ref<WeaverNodeCompositor> weaver_node = p_weaver_nodes[i];
+		Ref<WeaverWebCompositor> weaver_node = p_weaver_compositors[i];
 
 		// We add the effect even if this is an empty Ref, this allows the UI to add new entries.
-		weaver_nodes.push_back(weaver_node);
+		weaver_compositors.push_back(weaver_node);
 
 		// But we only add a rid for valid Refs
 		if (weaver_node.is_valid())
@@ -46,13 +46,13 @@ void WeaverWeb::set_weaver_nodes(const TypedArray<WeaverNodeCompositor> &p_weave
 	}
 }
 
-TypedArray<WeaverNodeCompositor> WeaverWeb::get_weaver_nodes() const
+TypedArray<WeaverWebCompositor> WeaverWeb::get_weaver_compositors() const
 {
-	TypedArray<WeaverNodeCompositor> arr;
+	TypedArray<WeaverWebCompositor> arr;
 
-	for (uint32_t i = 0; i < weaver_nodes.size(); i++)
+	for (uint32_t i = 0; i < weaver_compositors.size(); i++)
 	{
-		arr.push_back(weaver_nodes[i]);
+		arr.push_back(weaver_compositors[i]);
 	}
 
 	return arr;

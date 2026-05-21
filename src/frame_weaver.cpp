@@ -24,7 +24,7 @@ void FrameWeaver::_bind_methods() {
 void FrameWeaver::set_web(const Ref<WeaverWeb> &p_web)
 {
 	if (web == p_web) { return; }
-	//Dos some setup with the new web...
+	//Do some setup with the new web...
 	web = p_web;
 }
 
