@@ -4,15 +4,7 @@
 
 void FrameWeaver::_notification(int p_what)
 {
-	switch (p_what)
-	{
-		case Node::NOTIFICATION_ENTER_TREE: {
-
-		} break;
-		case Node::NOTIFICATION_EXIT_TREE: {
-
-		} break;
-	}
+	//todo: register the web into the RenderingWeaver server
 }
 
 void FrameWeaver::_bind_methods() {
@@ -24,7 +16,7 @@ void FrameWeaver::_bind_methods() {
 void FrameWeaver::set_web(const Ref<WeaverWeb> &p_web)
 {
 	if (web == p_web) { return; }
-	//Do some setup with the new web...
+	//Do some setup with the new WeaverWebCompositor...
 	web = p_web;
 }
 

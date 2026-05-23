@@ -2,10 +2,9 @@
 
 #include "core/io/resource.h"
 #include "weaver_web_compositor.h"
+#include "weaver_view.h"
 
-//Todo: Override the methods used to add effects here. dont display them on the property menu...
-// Instead we will show the list with fixed weaver passes that can be configured in the frameWeaver or using the plugin as well
-// as the list of raw CompositorEffects that can be added as well 
+
 class WeaverWeb : public Resource
 {
 	GDCLASS(WeaverWeb, Resource);
@@ -16,16 +15,36 @@ protected:
 public:
 	WeaverWeb();
 
-	void set_weaver_compositors(const TypedArray<WeaverWebCompositor> &p_weaver_compositors);
-	TypedArray<WeaverWebCompositor> get_weaver_compositors() const;
+	void set_weaver_views(const TypedArray<WeaverView> &p_weaver_compositors);
+	TypedArray<WeaverView> get_weaver_views() const;
 
 	//TODO: Add accessor to internal resource RIDs
 
 private:
-	LocalVector<Ref<WeaverWebCompositor>> weaver_compositors;
-	// At a higher level, we need to focus on compositors as our nodes since there are many restrictions in what can be shared between compositors,
-	// while within compositors we are pretty much free to do all kinds of sharing
+	// APPROACH: BUILD THE WEB, CHECK THE SCENE:
+	// All we need is to inject the WeaverWebCompositors into cameras (and WorldEnvironment)
+	// We must make the web independent of scene tree. Each FrameWeaver will be added as child to Camera3D. Each will hold a reference to the WeaverWeb
+	// EACH CAMERA SUBSCRIBES TO THE WEB USING AN ID/PORT. We can then do this subscription USING THE RenderingWeaver (SERVER) for checking for the port
+	// THE Web will abstract viewports as well. Each camera can be subscribed to a single viewport in the web and during runtime we can check which viewports are used in the scene
+	// ---> We can also make a custom Viewport-related node that also subscribes to the web through am ID/PORT and then we check validity
+	// ---> For the user, knowing which camera is which will be very important so we ABSOLUTELY NEED TO HOLD CAMERA REFERENCES (in the scene these will correspond to FrameWeavers)
+	// 
+	//
+	// - THIS IS A GOOD APPROACH SINCE THE WEB BECOMES THE REAL SOURCE OF TRUTH (The scene is just the runtime component that gets validated)
+	// - Each FrameWeaver will subscribe a camera to a WeaverViewport through a Port.
+	// -But we ALSO NEED TO IDENTIFY THE VIEWPORT THAT THE CAMERA REGISTERS TO. Each viewpoort on the web will have its set of ports
+	//  First we can check if the viewport is the root one. The root viewport gets special treatment on the web (its the default one that will be pre-generated)
+	//  THEN IF NOT THE ROOT WE CHECK IF ITS A WeaverVieport and THROUGH ITS OWNED RESOURCE WE IDENTIFY WHICH PORTS ARE AVAILABLE
+	LocalVector<Ref<WeaverView>> weaver_views; // One WeaverView per viewport... The default one is ALWAYS at element 0...
 
-	//FIRST: Figure out how maintain the state between scene hierarchy and WeaverNodeCompositors ! (draw graph)
-	// -Multiviewport and cross-scene compilation is the hardest
+
+	// In order to make the scene trully independent from the web, we register both viewports and cameras to their respective views and web cameras through ports..
+	// This makes the scene more resilient to changes... In the scene we only add nodes that hook their parents to the web through ports
+	//
+	// ---> ANOTHER APPROACH: We make web resources that hold references to the web that created them (owned by that web) and assign the resources to the nodes
+	//       THIS IS THE BEST SINCE ITS EASIER TO DEBUG... JUST DO IT. MAKE ALL WEB RESOURCES HOLD A REFERNECE TO THE WEB THAT OWNS THEM
+	//
+	// -------------------------> REHYDRATION PATTERN !!! WeaverWeb serialized owned. Owned resources get initialized with WeaverWeb ref during WeaverWeb init (POSTINITIALIZE)
+	//                            INSTEAD OF REFERENCES, MAKE RIDS USING THE RenderingWeaver server !
+
 };

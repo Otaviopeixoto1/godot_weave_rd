@@ -29,7 +29,8 @@ void WeaverWebCompositor::set_weaver_nodes(const TypedArray<WeaverWebNode> &p_we
 	}
 }
 
-TypedArray<WeaverWebNode> WeaverWebCompositor::get_weaver_nodes() const {
+TypedArray<WeaverWebNode> WeaverWebCompositor::get_weaver_nodes() const
+{
 	TypedArray<WeaverWebNode> arr;
 
 	for (uint32_t i = 0; i < weaver_nodes.size(); i++) {
