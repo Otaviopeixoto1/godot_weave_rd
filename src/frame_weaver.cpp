@@ -7,7 +7,8 @@ void FrameWeaver::_notification(int p_what)
 	//todo: register the web into the RenderingWeaver server
 }
 
-void FrameWeaver::_bind_methods() {
+void FrameWeaver::_bind_methods()
+{
 	ClassDB::bind_method(D_METHOD("set_web", "web"), &FrameWeaver::set_web);
 	ClassDB::bind_method(D_METHOD("get_web"), &FrameWeaver::get_web);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "web", PROPERTY_HINT_RESOURCE_TYPE, "WeaverWeb"), "set_web", "get_web");

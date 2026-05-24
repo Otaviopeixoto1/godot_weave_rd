@@ -1,7 +1,7 @@
 #pragma once 
 
 #include "core/io/resource.h"
-#include "weaver_web_compositor.h"
+#include "weaver_spider.h"
 
 class WeaverView : public Resource
 {
@@ -11,10 +11,17 @@ protected:
 	static void _bind_methods();
 
 public:
-	void set_weaver_compositors(const TypedArray<WeaverWebCompositor> &p_weaver_compositors);
-	TypedArray<WeaverWebCompositor> get_weaver_compositors() const;
+	WeaverView();
+	virtual ~WeaverView();
+
+	void set_web(RID p_web);
+	virtual RID get_rid() const override { return view; }
+
+	void set_weaver_spiders(const TypedArray<WeaverSpider> &p_weaver_spiders);
+	TypedArray<WeaverSpider> get_weaver_spiders() const;
 
 private:
-	//Ref<WeaverWeb> web; //---> HERE INSTEAD OF WEB REFERENCE, STORE A RID of WEB
-	LocalVector<Ref<WeaverWebCompositor>> weaver_compositors;
+	RID view;
+	RID web;
+	LocalVector<Ref<WeaverSpider>> weaver_spiders;
 };

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "core/io/resource.h"
-#include "weaver_web_compositor.h"
 #include "weaver_view.h"
 
 
@@ -14,6 +13,9 @@ protected:
 	static void _bind_methods();
 public:
 	WeaverWeb();
+	virtual ~WeaverWeb();
+
+	virtual RID get_rid() const override { return web; }
 
 	void set_weaver_views(const TypedArray<WeaverView> &p_weaver_compositors);
 	TypedArray<WeaverView> get_weaver_views() const;
@@ -21,6 +23,7 @@ public:
 	//TODO: Add accessor to internal resource RIDs
 
 private:
+	RID web;
 	// APPROACH: BUILD THE WEB, CHECK THE SCENE:
 	// All we need is to inject the WeaverWebCompositors into cameras (and WorldEnvironment)
 	// We must make the web independent of scene tree. Each FrameWeaver will be added as child to Camera3D. Each will hold a reference to the WeaverWeb

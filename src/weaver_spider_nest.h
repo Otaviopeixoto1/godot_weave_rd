@@ -1,11 +1,11 @@
 #pragma once
 
 #include "scene/main/node.h"
-#include "resources/weaver_web_compositor.h"
+#include "resources/weaver_spider.h"
 
-class WeaverCameraHook : public Node
+class WeaverSpiderNest : public Node
 {
-	GDCLASS(WeaverCameraHook, Node);
+	GDCLASS(WeaverSpiderNest, Node);
 
 	//
 	//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -16,16 +16,17 @@ class WeaverCameraHook : public Node
 	//
 	// There are some implicit guarantees: There can be only one compositor (WeaverWebCompositor) per camera on the scene. These will be isolated nodes on the WeaverWeb.
 	// We can compile WeaverWebCompositors statically and then the whole Web can be connected at runtime through signals between resources
-	// 
+	//
+	// AT RUNTIME, INJECT THE Compositor into the camera. Setup vanilla passes as well as WeaverPasses
 	//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 protected:
 	void _notification(int p_what);
 	static void _bind_methods();
 public:
-	void set_web_compositor(const Ref<WeaverWebCompositor> &p_web);
-	Ref<WeaverWebCompositor> get_web_compositor() const;
+	void set_spider(const Ref<WeaverSpider> &p_spider);
+	Ref<WeaverSpider> get_spider() const;
 
 private:
-	Ref<WeaverWebCompositor> web_compositor;
+	Ref<WeaverSpider> spider;
 };

@@ -1,5 +1,5 @@
 #include "weaver_web.h"
-
+#include "../rendering_weaver.h"
 
 
 void WeaverWeb::_notification(int p_what)
@@ -32,37 +32,52 @@ void WeaverWeb::_bind_methods()
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "weaver_views", PROPERTY_HINT_ARRAY_TYPE, MAKE_RESOURCE_TYPE_HINT("WeaverView")), "set_weaver_views", "get_weaver_views");
 }
 
-
 WeaverWeb::WeaverWeb()
 {
 	print_line("WEAVERWEB CONSTRUCT");
+	RenderingWeaver *weaver = RenderingWeaver::get_singleton();
+	if (weaver != nullptr)
+	{
+		web = weaver->web_create();
+	}
+}
+
+WeaverWeb::~WeaverWeb()
+{
+	RenderingWeaver *weaver = RenderingWeaver::get_singleton();
+	if (weaver != nullptr && web.is_valid())
+	{
+		weaver->free_rid(web);
+	}
 }
 
 void WeaverWeb::set_weaver_views(const TypedArray<WeaverView> &p_weaver_views)
 {
-	//Array effect_rids;
+	print_line("WEAVERWEB SET VIEWS");
+	Vector<RID> view_rids;
 	weaver_views.clear();
 
 	for (int i = 0; i < p_weaver_views.size(); i++)
 	{
-		// Cast to proper ref, if our object isn't a CompositorEffect resource this will be an empty Ref.
-		Ref<WeaverView> weaver_node = p_weaver_views[i];
-
-		//
-		// TODO: Hydrate all new WeaverViews with this WeaverWeb reference
-		// INSTEAD OF REFERENCES, MAKE RIDS USING THE RenderingWeaver server !
-		//
+		Ref<WeaverView> weaver_view = p_weaver_views[i];
 
 		// We add the effect even if this is an empty Ref, this allows the UI to add new entries.
-		weaver_views.push_back(weaver_node);
+		weaver_views.push_back(weaver_view); 
 
 		// But we only add a rid for valid Refs
-		if (weaver_node.is_valid())
+		if (weaver_view.is_valid())
 		{
-			//RID rid = compositor_effect->get_rid();
-			//effect_rids.push_back(rid);
+			RID rid = weaver_view->get_rid();
+
+			// Hydrate all new WeaverViews with this WeaverWeb reference
+			weaver_view->set_web(web);
+			print_line(vformat("WEB HYDRATE VIEW %s", rid));
+
+			view_rids.push_back(rid);
 		}
 	}
+
+	RenderingWeaver::get_singleton()->web_set_views(web, view_rids);
 }
 
 TypedArray<WeaverView> WeaverWeb::get_weaver_views() const
