@@ -1,4 +1,6 @@
 #include "weaver_view.h"
+#include "weaver_web.h"
+
 #include "../rendering_weaver.h"
 
 
@@ -27,8 +29,7 @@ WeaverView::~WeaverView()
 	}
 }
 
-void WeaverView::set_web(RID p_web)
-{
+void WeaverView::_set_web(RID p_web) {
 	//TODO: trigger the signal for the node containing this WeaverView resource to signal to RenderingWeaver that its active
 	//   ----> MAYBE NOT NECESSARY SINCE WE CAN USE THAT ALL RESOURCES INITIALIZE BEFORE THE SCENE (???)
 	web = p_web;

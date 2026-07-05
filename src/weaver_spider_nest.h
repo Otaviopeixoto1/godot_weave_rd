@@ -9,13 +9,8 @@ class WeaverSpiderNest : public Node
 
 	//
 	//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	// --------> Best Idea: Make FrameWeaver connect to its parent viewport and check if the camera has weaver_node_compositor assigned. If so then we compile the graph.
-	// ---------- Register all active FrameWeavers to RenderingWeaver (Server) at runtime and dynamically compile dependencies
-	// ---------- We must match Each WeaverWeb (from FrameWeaver) with active WeaverWebCompositors (from Camera3D/WorldEnvironment)
-	// ---------- Make the plugin compile the scene only once and allow for easily assigning WeaverWebCompositors
-	//
-	// There are some implicit guarantees: There can be only one compositor (WeaverWebCompositor) per camera on the scene. These will be isolated nodes on the WeaverWeb.
-	// We can compile WeaverWebCompositors statically and then the whole Web can be connected at runtime through signals between resources
+	// This should not be immediatelly tied to a specific WeaverSpider... We need to make it dynamic and relly on binding indexes instead of handles to specific resournces.
+	// THEREFORE, JUST EXPOSE A BINDING ID THAT THE USER CAN SET AND THE CAMERA WILL BE ASSIGNED TO A SPIDER AT RUNTIME
 	//
 	// AT RUNTIME, INJECT THE Compositor into the camera. Setup vanilla passes as well as WeaverPasses
 	//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -23,10 +18,15 @@ class WeaverSpiderNest : public Node
 protected:
 	void _notification(int p_what);
 	static void _bind_methods();
+
 public:
 	void set_spider(const Ref<WeaverSpider> &p_spider);
 	Ref<WeaverSpider> get_spider() const;
 
+	void set_slot(int slot);
+	int get_slot();
+
 private:
+	int slot{ 0 }; 
 	Ref<WeaverSpider> spider;
 };

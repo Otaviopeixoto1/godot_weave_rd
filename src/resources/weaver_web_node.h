@@ -3,6 +3,14 @@
 #include "scene/resources/compositor.h"
 
 
+//
+// TODO: Add logic for this. What do we share between nodes ? what can be shared ? how to better organze ?
+// -One node per injection point or several injection points (several CompositorEffects) per node ?
+// -Camera draw order might also be important
+//
+// -for a clear IO structure we need this to be one injection point per node. NODES HAVE TO BE ATOMIC. THEY HAVE INPUT AND OUTPUT AND THAT IS IT
+// -WE CAN HAVE A NEW GRAPH AT THE WeaverSpider LEVEL, SINCE ALL RESOURCES ARE EASILY SHARED FOR THE SAME SPIDER (camera)
+//
 class WeaverWebNode : public CompositorEffect
 {
 	GDCLASS(WeaverWebNode, CompositorEffect);

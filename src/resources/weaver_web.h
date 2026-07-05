@@ -41,13 +41,6 @@ private:
 	LocalVector<Ref<WeaverView>> weaver_views; // One WeaverView per viewport... The default one is ALWAYS at element 0...
 
 
-	// In order to make the scene trully independent from the web, we register both viewports and cameras to their respective views and web cameras through ports..
-	// This makes the scene more resilient to changes... In the scene we only add nodes that hook their parents to the web through ports
-	//
-	// ---> ANOTHER APPROACH: We make web resources that hold references to the web that created them (owned by that web) and assign the resources to the nodes
-	//       THIS IS THE BEST SINCE ITS EASIER TO DEBUG... JUST DO IT. MAKE ALL WEB RESOURCES HOLD A REFERNECE TO THE WEB THAT OWNS THEM
-	//
-	// -------------------------> REHYDRATION PATTERN !!! WeaverWeb serialized owned. Owned resources get initialized with WeaverWeb ref during WeaverWeb init (POSTINITIALIZE)
-	//                            INSTEAD OF REFERENCES, MAKE RIDS USING THE RenderingWeaver server !
+	// A Weaver view should be initialized first, then its web should be initialized !
 
 };

@@ -12,6 +12,10 @@ void FrameWeaver::_bind_methods()
 	ClassDB::bind_method(D_METHOD("set_web", "web"), &FrameWeaver::set_web);
 	ClassDB::bind_method(D_METHOD("get_web"), &FrameWeaver::get_web);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "web", PROPERTY_HINT_RESOURCE_TYPE, "WeaverWeb"), "set_web", "get_web");
+
+	ClassDB::bind_method(D_METHOD("set_port", "port"), &FrameWeaver::set_port);
+	ClassDB::bind_method(D_METHOD("get_port"), &FrameWeaver::get_port);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "port"), "set_port", "get_port");
 }
 
 void FrameWeaver::set_web(const Ref<WeaverWeb> &p_web)
@@ -24,4 +28,14 @@ void FrameWeaver::set_web(const Ref<WeaverWeb> &p_web)
 Ref<WeaverWeb> FrameWeaver::get_web() const
 {
 	return web;
+}
+
+void FrameWeaver::set_port(int port)
+{
+	this->port = port;
+}
+
+int FrameWeaver::get_port()
+{
+	return port;
 }

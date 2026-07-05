@@ -24,7 +24,11 @@ void WeaverSpiderNest::_bind_methods()
 {
 	ClassDB::bind_method(D_METHOD("set_spider", "spider"), &WeaverSpiderNest::set_spider);
 	ClassDB::bind_method(D_METHOD("get_spider"), &WeaverSpiderNest::get_spider);
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "spider", PROPERTY_HINT_RESOURCE_TYPE, "WeaverSpider"), "set_spider", "get_spider");
+	//ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "spider", PROPERTY_HINT_RESOURCE_TYPE, "WeaverSpider"), "set_spider", "get_spider");
+
+	ClassDB::bind_method(D_METHOD("set_slot", "slot"), &WeaverSpiderNest::set_slot);
+	ClassDB::bind_method(D_METHOD("get_slot"), &WeaverSpiderNest::get_slot);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "slot"), "set_slot", "get_slot");
 }
 
 void WeaverSpiderNest::set_spider(const Ref<WeaverSpider> &p_spider)
@@ -37,4 +41,14 @@ void WeaverSpiderNest::set_spider(const Ref<WeaverSpider> &p_spider)
 Ref<WeaverSpider> WeaverSpiderNest::get_spider() const
 {
 	return spider;
+}
+
+void WeaverSpiderNest::set_slot(int slot)
+{
+	this->slot = slot;
+}
+
+int WeaverSpiderNest::get_slot()
+{
+	return slot;
 }

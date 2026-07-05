@@ -70,7 +70,7 @@ void WeaverWeb::set_weaver_views(const TypedArray<WeaverView> &p_weaver_views)
 			RID rid = weaver_view->get_rid();
 
 			// Hydrate all new WeaverViews with this WeaverWeb reference
-			weaver_view->set_web(web);
+			weaver_view->_set_web(web);
 			print_line(vformat("WEB HYDRATE VIEW %s", rid));
 
 			view_rids.push_back(rid);

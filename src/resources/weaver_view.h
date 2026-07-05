@@ -2,6 +2,7 @@
 
 #include "core/io/resource.h"
 #include "weaver_spider.h"
+class WeaverWeb;
 
 class WeaverView : public Resource
 {
@@ -14,7 +15,7 @@ public:
 	WeaverView();
 	virtual ~WeaverView();
 
-	void set_web(RID p_web);
+	void _set_web(RID p_web);
 	virtual RID get_rid() const override { return view; }
 
 	void set_weaver_spiders(const TypedArray<WeaverSpider> &p_weaver_spiders);
