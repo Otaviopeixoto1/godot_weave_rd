@@ -1,5 +1,5 @@
 #include "frame_weaver.h"
-
+#include "core/object/class_db.h"
 
 
 void FrameWeaver::_notification(int p_what)

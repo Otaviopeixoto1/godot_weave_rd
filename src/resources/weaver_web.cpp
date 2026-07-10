@@ -1,4 +1,6 @@
 #include "weaver_web.h"
+#include "core/object/class_db.h"
+
 #include "../rendering_weaver.h"
 
 

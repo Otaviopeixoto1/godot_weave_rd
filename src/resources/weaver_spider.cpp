@@ -1,6 +1,7 @@
 #include "weaver_spider.h"
-#include "../rendering_weaver.h"
+#include "core/object/class_db.h"
 
+#include "../rendering_weaver.h"
 
 void WeaverSpider::_bind_methods()
 {

@@ -1,5 +1,5 @@
 #include "weaver_spider_nest.h"
-
+#include "core/object/class_db.h"
 
 
 void WeaverSpiderNest::_notification(int p_what)
