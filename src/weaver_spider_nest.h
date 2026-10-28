@@ -9,7 +9,7 @@ class WeaverSpiderNest : public Node
 
 	//
 	//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	// This should not be immediatelly tied to a specific WeaverSpider... We need to make it dynamic and relly on binding indexes instead of handles to specific resournces.
+	// This should not be immediatelly tied to a specific WeaverSpider... We need to make it dynamic and relly on binding indexes instead of handles to specific resources.
 	// THEREFORE, JUST EXPOSE A BINDING ID THAT THE USER CAN SET AND THE CAMERA WILL BE ASSIGNED TO A SPIDER AT RUNTIME
 	//
 	// AT RUNTIME, INJECT THE Compositor into the camera. Setup vanilla passes as well as WeaverPasses

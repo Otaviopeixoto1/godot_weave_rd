@@ -25,6 +25,13 @@ void WeaverWebNode::_bind_methods()
 void WeaverWebNode::_internal_weaver_render_callback(int p_effect_callback_type, const RenderData *p_render_data)
 {
 	print_line("_internal_weaver_render_callback");
+
+	// TODO: Do the rendering calls here ...
+	// -Here we must call a virtual method with prepared data. RenderData must be preprocessed.
+	// -The rendergraph setup will be done here... We must pass the registry with resources that the user can access
+
+	// TODO: Add another callback where the user can preregister the required resources for this node
+
 }
 
 WeaverWebNode::WeaverWebNode()

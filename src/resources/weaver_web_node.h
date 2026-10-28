@@ -15,8 +15,10 @@ class WeaverWebNode : public CompositorEffect
 {
 	GDCLASS(WeaverWebNode, CompositorEffect);
 
-	// TODO: Create a runtime script that will run the _render_callback from gdscript calling the WeaverWebNode::_internal_weaver_render_callback method
 protected:
+
+	// Notification callback from godot. Used here to register a dummy script that calls _internal_weaver_render_callback(). 
+	// (This is called for the full inheritance chain ! All that inherit WeaverWebNode will also have this same script !)
 	void _notification(int p_what);
 	static void _bind_methods();
 
