@@ -1,4 +1,5 @@
 #include "rendering_weaver.h"
+#include "weaver_spider_instance.h"
 #include "core/object/class_db.h"
 #include "core/object/callable_mp.h"
 
@@ -23,6 +24,12 @@ RenderingWeaver::RenderingWeaver()
 
 RenderingWeaver::~RenderingWeaver()
 {
+	for (KeyValue<ObjectID, WeaverSpiderInstance *> &E : spider_instances)
+	{
+		memdelete(E.value);
+	}
+	spider_instances.clear();
+
 	if (active_web.is_valid())
 	{
 		active_web->disconnect_changed(callable_mp(this, &RenderingWeaver::_queue_resolve));
@@ -146,6 +153,8 @@ void RenderingWeaver::register_camera_nest(Node *p_nest, Camera3D *p_camera, con
 void RenderingWeaver::unregister_camera_nest(Node *p_nest)
 {
 	ERR_FAIL_NULL(p_nest);
+	// Torn down right away (not on the next resolve): the camera may be freed right after its nest.
+	_free_spider_instance(p_nest->get_instance_id());
 	if (camera_nests.erase(p_nest->get_instance_id()))
 	{
 		_queue_resolve();
@@ -424,7 +433,7 @@ void RenderingWeaver::_resolve()
 		binding.view = view_binding.view;
 	}
 
-	// One camera can only run one lane (it has a single compositor).
+	// One camera can only run one lane (WeaverSpider) (it has a single compositor).
 	for (const KeyValue<ObjectID, LocalVector<ObjectID>> &E : nests_on_camera)
 	{
 		if (E.value.size() == 1) continue;
@@ -439,7 +448,7 @@ void RenderingWeaver::_resolve()
 	}
 
 	//
-	// Web errors: reported on the nests bound to the affected view/lane, or on every nest when none is.
+	// Web errors: reported on the nests bound to the affected view/lane (WeaverSpider), or on every nest when none is.
 	//
 	for (int i = 0; i < web_errors.size(); i++)
 	{
@@ -448,7 +457,7 @@ void RenderingWeaver::_resolve()
 		const int lane = issue["lane"];
 		const String message = "Active WeaverWeb: " + String(issue["message"]);
 
-		// Most specific first: camera nests of the lane, then nests of the view, then everyone.
+		// Most specific first: camera nests of the lane (WeaverSpider), then nests of the view, then everyone.
 		bool reported = false;
 		if (view >= 0)
 		{
@@ -470,6 +479,60 @@ void RenderingWeaver::_resolve()
 			for (KeyValue<ObjectID, CameraBinding> &E : camera_nests) E.value.warnings.push_back(message);
 		}
 	}
+
+	_sync_spider_instances(web_views);
+}
+
+
+//
+// Runtime compositors
+//
+
+void RenderingWeaver::_sync_spider_instances(const TypedArray<WeaverView> &p_web_views)
+{
+	// Clear stale WeaverSpiderInstances 
+	LocalVector<ObjectID> stale;
+	for (const KeyValue<ObjectID, WeaverSpiderInstance *> &E : spider_instances)
+	{
+		const CameraBinding *binding = camera_nests.getptr(E.key);
+		if (binding == nullptr || binding->lane < 0 || binding->camera != E.value->get_camera())
+		{
+			stale.push_back(E.key);
+			continue;
+		}
+
+		const Ref<WeaverView> view = p_web_views[binding->view];
+		if (Ref<WeaverSpider>(view->get_weaver_spiders()[binding->lane]) != E.value->get_spider())
+		{
+			stale.push_back(E.key);
+		}
+	}
+	for (const ObjectID &nest : stale)
+	{
+		_free_spider_instance(nest);
+	}
+
+	// Make a new WeaverSpiderInstance per registered/resolved camera
+	for (const KeyValue<ObjectID, CameraBinding> &E : camera_nests)
+	{
+		const CameraBinding &binding = E.value;
+		if (binding.lane < 0 || spider_instances.has(E.key)) { continue; }
+
+		Camera3D *camera = Object::cast_to<Camera3D>(ObjectDB::get_instance(binding.camera));
+		const Ref<WeaverView> view = p_web_views[binding.view];
+		const Ref<WeaverSpider> spider = view->get_weaver_spiders()[binding.lane];
+		if (camera == nullptr || spider.is_null()) { continue; }
+
+		spider_instances.insert(E.key, memnew(WeaverSpiderInstance(camera, spider)));
+	}
+}
+
+void RenderingWeaver::_free_spider_instance(const ObjectID &p_nest)
+{
+	WeaverSpiderInstance **instance = spider_instances.getptr(p_nest);
+	if (instance == nullptr) { return; }
+	memdelete(*instance);
+	spider_instances.erase(p_nest);
 }
 
 

@@ -13,7 +13,7 @@ class Tree;
 //
 // Replaces the resource picker of a WeaverSlot  property with a slot menu.
 //
-// Scene nodes (WeaverViewAnchor / WeaverSpiderNest) pick from every saved WeaverWeb, grouped web > view > lane.
+// Scene nodes (WeaverViewAnchor / WeaverSpiderNest) pick from every saved WeaverWeb, grouped web > view > lane (WeaverSpider).
 // Web parts (WeaverView / WeaverSpider) pick from every slot file of their type, and can create or rename slots.
 //
 class EditorPropertyWeaverSlot : public EditorProperty
