@@ -1,7 +1,6 @@
 #pragma once
 
 #include "core/object/object.h"
-#include "modules/gdscript/gdscript.h"
 #include "core/templates/rid_owner.h"
 
 // Central manager class for all WeaverWebs .
@@ -40,10 +39,6 @@ private:
 	};
 	mutable RID_Owner<Node> node_owner;
 
-
-	// A script implementing the method used for hooking into the CompositorEffect _render_callback in WeaverWebNodes.
-	// THIS IS A FALLBACK SOLUTION since godot doesnt expose the _render_callback to modules yet...
-	Ref<GDScript> weaver_node_script;
 
 	bool is_web(RID rid);
 	bool is_view(RID rid);
@@ -86,6 +81,4 @@ public:
 	RID node_create();
 
 	void free_rid(RID rid);
-
-	Ref<GDScript> get_weaver_node_script();
 };

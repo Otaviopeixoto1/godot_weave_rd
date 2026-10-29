@@ -1,44 +1,132 @@
 #include "weaver_web_node.h"
-#include "../rendering_weaver.h"
 
 #include "core/object/class_db.h"
-#include "core/object/callable_mp.h"
-#include "modules/gdscript/gdscript.h"
 
-void WeaverWebNode::_notification(int p_what)
-{
-	switch (p_what) {
-		case NOTIFICATION_POSTINITIALIZE: {
-			callable_mp(this, &WeaverWebNode::_attach_script).call_deferred();
-		} break;
-		case NOTIFICATION_PREDELETE: {
-			//Delete script ??
-		} break;
+
+
+void WeaverWebNode::set_enabled(bool p_enabled) {
+	enabled = p_enabled;
+	emit_changed();
+}
+
+bool WeaverWebNode::get_enabled() const {
+	return enabled;
+}
+
+void WeaverWebNode::set_stage(Stage p_stage) {
+	ERR_FAIL_INDEX(p_stage, MAX);
+	stage = p_stage;
+	emit_changed();
+}
+
+WeaverWebNode::Stage WeaverWebNode::get_stage() const {
+	return stage;
+}
+
+void WeaverWebNode::set_access_resolved_color(bool p_enabled) {
+	access_resolved_color = p_enabled;
+	emit_changed();
+}
+
+bool WeaverWebNode::get_access_resolved_color() const {
+	return access_resolved_color;
+}
+
+void WeaverWebNode::set_access_resolved_depth(bool p_enabled) {
+	access_resolved_depth = p_enabled;
+	emit_changed();
+}
+
+bool WeaverWebNode::get_access_resolved_depth() const {
+	return access_resolved_depth;
+}
+
+void WeaverWebNode::set_needs_motion_vectors(bool p_enabled) {
+	needs_motion_vectors = p_enabled;
+	emit_changed();
+}
+
+bool WeaverWebNode::get_needs_motion_vectors() const {
+	return needs_motion_vectors;
+}
+
+void WeaverWebNode::set_needs_normal_roughness(bool p_enabled) {
+	needs_normal_roughness = p_enabled;
+	emit_changed();
+}
+
+bool WeaverWebNode::get_needs_normal_roughness() const {
+	return needs_normal_roughness;
+}
+
+void WeaverWebNode::set_needs_separate_specular(bool p_enabled) {
+	needs_separate_specular = p_enabled;
+	emit_changed();
+}
+
+bool WeaverWebNode::get_needs_separate_specular() const {
+	return needs_separate_specular;
+}
+
+
+// GDVIRTUAL_CALL returns false when no script or extension implements the method, then the native hook runs.
+void WeaverWebNode::render(int p_stage, const RenderData *p_render_data) {
+	if (!GDVIRTUAL_CALL(_render, p_stage, p_render_data)) {
+		_render_native(p_stage, p_render_data);
 	}
 }
 
+void WeaverWebNode::setup() {
+	if (!GDVIRTUAL_CALL(_setup)) {
+		_setup_native();
+	}
+}
+
+void WeaverWebNode::cleanup() {
+	if (!GDVIRTUAL_CALL(_cleanup)) {
+		_cleanup_native();
+	}
+}
+
+
 void WeaverWebNode::_bind_methods()
 {
-	ClassDB::bind_method(D_METHOD("_internal_weaver_render_callback", "effect_callback_type", "render_data"), &WeaverWebNode::_internal_weaver_render_callback);
-}
+	ClassDB::bind_method(D_METHOD("set_enabled", "enabled"), &WeaverWebNode::set_enabled);
+	ClassDB::bind_method(D_METHOD("get_enabled"), &WeaverWebNode::get_enabled);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "enabled"), "set_enabled", "get_enabled");
 
-void WeaverWebNode::_internal_weaver_render_callback(int p_effect_callback_type, const RenderData *p_render_data)
-{
-	print_line("_internal_weaver_render_callback");
+	ClassDB::bind_method(D_METHOD("set_stage", "stage"), &WeaverWebNode::set_stage);
+	ClassDB::bind_method(D_METHOD("get_stage"), &WeaverWebNode::get_stage);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "stage", PROPERTY_HINT_ENUM, "Pre Opaque,Post Opaque,Post Sky,Pre Transparent,Post Transparent"), "set_stage", "get_stage");
 
-	// TODO: Do the rendering calls here ...
-	// -Here we must call a virtual method with prepared data. RenderData must be preprocessed.
-	// -The rendergraph setup will be done here... We must pass the registry with resources that the user can access
+	ClassDB::bind_method(D_METHOD("set_access_resolved_color", "enable"), &WeaverWebNode::set_access_resolved_color);
+	ClassDB::bind_method(D_METHOD("get_access_resolved_color"), &WeaverWebNode::get_access_resolved_color);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "access_resolved_color"), "set_access_resolved_color", "get_access_resolved_color");
 
-	// TODO: Add another callback where the user can preregister the required resources for this node
+	ClassDB::bind_method(D_METHOD("set_access_resolved_depth", "enable"), &WeaverWebNode::set_access_resolved_depth);
+	ClassDB::bind_method(D_METHOD("get_access_resolved_depth"), &WeaverWebNode::get_access_resolved_depth);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "access_resolved_depth"), "set_access_resolved_depth", "get_access_resolved_depth");
 
-}
+	ClassDB::bind_method(D_METHOD("set_needs_motion_vectors", "enable"), &WeaverWebNode::set_needs_motion_vectors);
+	ClassDB::bind_method(D_METHOD("get_needs_motion_vectors"), &WeaverWebNode::get_needs_motion_vectors);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "needs_motion_vectors"), "set_needs_motion_vectors", "get_needs_motion_vectors");
 
-void WeaverWebNode::_attach_script()
-{
-	//TODO: MANAGE THESE SCRIPTS FROM RenderingWeaver
-	Ref<GDScript> script = RenderingWeaver::get_singleton()->get_weaver_node_script();
-	if (script.is_valid()) set_script(script);
+	ClassDB::bind_method(D_METHOD("set_needs_normal_roughness", "enable"), &WeaverWebNode::set_needs_normal_roughness);
+	ClassDB::bind_method(D_METHOD("get_needs_normal_roughness"), &WeaverWebNode::get_needs_normal_roughness);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "needs_normal_roughness"), "set_needs_normal_roughness", "get_needs_normal_roughness");
 
-	// ALSO DETATCH IT !!! OTHERWISE THIS WOULD TRY TO GET SERIALIZED TO THE SCENE !
+	ClassDB::bind_method(D_METHOD("set_needs_separate_specular", "enable"), &WeaverWebNode::set_needs_separate_specular);
+	ClassDB::bind_method(D_METHOD("get_needs_separate_specular"), &WeaverWebNode::get_needs_separate_specular);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "needs_separate_specular"), "set_needs_separate_specular", "get_needs_separate_specular");
+
+	GDVIRTUAL_BIND(_render, "stage", "render_data");
+	GDVIRTUAL_BIND(_setup);
+	GDVIRTUAL_BIND(_cleanup);
+
+	BIND_ENUM_CONSTANT(PRE_OPAQUE);
+	BIND_ENUM_CONSTANT(POST_OPAQUE);
+	BIND_ENUM_CONSTANT(POST_SKY);
+	BIND_ENUM_CONSTANT(PRE_TRANSPARENT);
+	BIND_ENUM_CONSTANT(POST_TRANSPARENT);
+	BIND_ENUM_CONSTANT(MAX);
 }

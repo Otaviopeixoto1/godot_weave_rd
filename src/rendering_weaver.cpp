@@ -230,21 +230,3 @@ RenderingWeaver::RenderingWeaver()
 	singleton = this;
 }
 
-
-
-Ref<GDScript> RenderingWeaver::get_weaver_node_script()
-{
-	if (!weaver_node_script.is_valid())
-	{
-		weaver_node_script.instantiate();
-		weaver_node_script->set_source_code(
-				"@tool\n"
-				"extends WeaverWebNode\n"
-				"func _render_callback(p_effect_callback_type, p_render_data):\n"
-				"   _internal_weaver_render_callback(p_effect_callback_type, p_render_data)\n");
-		Error err = weaver_node_script->reload();
-		ERR_FAIL_COND_V_MSG(err != OK, nullptr, "FAILED COMPILING SCRIPT");
-	}
-
-	return weaver_node_script;
-}
