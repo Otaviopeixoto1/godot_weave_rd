@@ -8,10 +8,10 @@
 class WeaverWeb;
 
 //
-// (tools builds only)
+// (TOOL build only)
 // Editor-side management of Slot Resource files (see: "resources/weaver_slot.h")
 // New slots are written to a visible folder (project setting weaver/editor/slot_directory).
-// Slots are listed per web (or by type, for the slot pickers inside a web).
+// Slots are listed per web (or by type in the case of "slot pickers" inside a web).
 //
 class WeaverSlotLibrary : public Object
 {
