@@ -13,6 +13,13 @@
 #include "src/weaver_view_anchor.h"
 #include "src/weaver_spider_nest.h"
 
+#ifdef TOOLS_ENABLED
+#include "core/config/project_settings.h"
+#include "editor/plugins/editor_plugin.h"
+#include "src/editor/weaver_slot_editor_plugin.h"
+#include "src/editor/weaver_slot_library.h"
+#endif
+
 
 static RenderingWeaver *_weaver = nullptr;
 
@@ -40,8 +47,25 @@ void initialize_godot_weave_rd_module(ModuleInitializationLevel p_level)
 		ClassDB::register_class<WeaverSpinner>();
 		ClassDB::register_class<WeaverViewAnchor>();
 		ClassDB::register_class<WeaverSpiderNest>();
+
+#ifdef TOOLS_ENABLED
+		// Editor-only slot management. Registered at scene level so tools builds can use it from scripts and tests.
+		GLOBAL_DEF_BASIC(PropertyInfo(Variant::STRING, "weaver/editor/slot_directory", PROPERTY_HINT_DIR), "res://weaver/slots/");
+		ClassDB::register_class<WeaverSlotLibrary>();
+#endif
 		return;
 	}
+
+#ifdef TOOLS_ENABLED
+	if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR)
+	{
+		ClassDB::register_internal_class<EditorPropertyWeaverSlot>();
+		ClassDB::register_internal_class<WeaverSlotInspectorPlugin>();
+		ClassDB::register_internal_class<WeaverSlotEditorPlugin>();
+		EditorPlugins::add_by_type<WeaverSlotEditorPlugin>();
+		return;
+	}
+#endif
 }
 
 void uninitialize_godot_weave_rd_module(ModuleInitializationLevel p_level)
