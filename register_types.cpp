@@ -20,14 +20,11 @@
 #include "src/editor/weaver_slot_library.h"
 #endif
 
-
-static RenderingWeaver *_weaver = nullptr;
-
 void initialize_godot_weave_rd_module(ModuleInitializationLevel p_level)
 {
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SERVERS)
 	{
-		_weaver = memnew(RenderingWeaver);
+		memnew(RenderingWeaver);
 		ClassDB::register_class<RenderingWeaver>();
 		Engine::get_singleton()->add_singleton(Engine::Singleton("RenderingWeaver", RenderingWeaver::get_singleton()));
 		return;
@@ -72,11 +69,10 @@ void uninitialize_godot_weave_rd_module(ModuleInitializationLevel p_level)
 {
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SERVERS)
 	{
-		if (_weaver)
+		if (RenderingWeaver *weaver = RenderingWeaver::get_singleton())
 		{
 			Engine::get_singleton()->remove_singleton("RenderingWeaver");
-			memdelete(_weaver);
-			_weaver = nullptr;
+			memdelete(weaver);
 		}
 		return;
 	}
