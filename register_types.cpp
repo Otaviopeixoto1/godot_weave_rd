@@ -48,8 +48,9 @@ void uninitialize_godot_weave_rd_module(ModuleInitializationLevel p_level)
 	{
 		if (_weaver)
 		{
-			//_weaver->finish();
+			Engine::get_singleton()->remove_singleton("RenderingWeaver");
 			memdelete(_weaver);
+			_weaver = nullptr;
 		}
 		return;
 	}
