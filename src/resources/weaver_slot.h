@@ -27,13 +27,13 @@ private:
 	String description;
 };
 
-// Identifies a view (one viewport of the pipeline).
+// Identifies a view (a Viewport).
 class WeaverViewSlot : public WeaverSlot
 {
 	GDCLASS(WeaverViewSlot, WeaverSlot);
 };
 
-// Identifies a lane (spider) inside a view, bound to a camera.
+// Identifies a lane (WeaverSpider) inside a view, bound to a camera.
 class WeaverCameraSlot : public WeaverSlot
 {
 	GDCLASS(WeaverCameraSlot, WeaverSlot);

@@ -23,7 +23,7 @@ public:
 	TypedArray<WeaverView> get_weaver_views() const;
 
 	// Checks the description for problems that would stop it from binding to a scene.
-	// Returns an Array of Dictionary { "severity": "error"|"warning", "message": String, "view": int, "lane": int } (-1 when not specific).
+	// Returns an Array of Dictionary { "severity": "error"|"warning", "message": String, "view": int, "lane": int } (-1 when not specific). "lane" is the WeaverSpider index in the view.
 	Array validate() const;
 
 private:

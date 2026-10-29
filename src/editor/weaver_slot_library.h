@@ -47,7 +47,7 @@ public:
 	// Moves the files to the OS trash (falls back to deleting them).
 	static Error delete_slot_files(const PackedStringArray &p_paths);
 
-	// Every saved web with its slots: [{ path, web, views: [{ slot, lanes: [camera slot, ...] }] }]
+	// Every saved web with its slots: [{ path, web, views: [{ slot, lanes: [camera slot, ...] }] }]  (lanes = WeaverSpiders)
 	static Array collect_web_slots();
 
 private:

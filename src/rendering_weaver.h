@@ -10,10 +10,11 @@
 class Node;
 class Viewport;
 class Camera3D;
+class WeaverSpiderInstance;
 
 //
 // RenderingWeaver is the singleton representing the binding registry between WeaverWebs and the scene.
-// It stores the active Web and the anchors and nests registered from scenes and resolves which camera runs which lane.
+// It stores the active Web and the anchors and nests registered from scenes and resolves which camera runs which lane (WeaverSpider).
 // Registration order does not matter: an entry stays pending (with a reason) until the missing piece is registered.
 //
 // Everything is stored by ObjectID, so nodes freed without unregistering are simply dropped on the next resolve.
@@ -78,9 +79,16 @@ private:
 	HashMap<ObjectID, ViewBinding> view_anchors;
 	HashMap<ObjectID, CameraBinding> camera_nests;
 
+	// Runtime compositor of each registered/resolved camera.
+	HashMap<ObjectID, WeaverSpiderInstance *> spider_instances;
+
 	bool resolve_queued = false;
 
 	void _queue_resolve();
 	void _flush();
 	void _resolve();
+
+
+	void _sync_spider_instances(const TypedArray<WeaverView> &p_web_views);
+	void _free_spider_instance(const ObjectID &p_nest);
 };

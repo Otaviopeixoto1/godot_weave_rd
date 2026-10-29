@@ -72,7 +72,7 @@ Array WeaverWeb::validate() const
 	Array issues;
 
 	HashMap<const WeaverSlot *, int> view_slot_owner; // slot -> first view using it
-	HashMap<const WeaverSpider *, Vector2i> spider_owner; // spider -> first (view, lane) using it
+	HashMap<const WeaverSpider *, Vector2i> spider_owner; // spider -> first (view, lane (WeaverSpider)) using it
 
 	for (uint32_t v = 0; v < weaver_views.size(); v++)
 	{
@@ -105,7 +105,7 @@ Array WeaverWeb::validate() const
 			}
 		}
 
-		HashMap<const WeaverSlot *, int> camera_slot_owner; // slot -> first lane of this view using it
+		HashMap<const WeaverSlot *, int> camera_slot_owner; // slot -> first lane (WeaverSpider) of this view using it
 		const TypedArray<WeaverSpider> spiders = view->get_weaver_spiders();
 
 		for (int l = 0; l < spiders.size(); l++)

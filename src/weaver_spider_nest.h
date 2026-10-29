@@ -4,7 +4,7 @@
 #include "resources/weaver_spider.h"
 
 //
-// Binds its parent Camera3D to the lane with the same WeaverCameraSlot (in the view anchored to the camera parent viewport)
+// Binds its parent Camera3D to the lane (WeaverSpider) with the same WeaverCameraSlot (in the view anchored to the camera parent viewport)
 //
 class WeaverSpiderNest : public Node
 {

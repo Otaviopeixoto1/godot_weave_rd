@@ -198,7 +198,7 @@ void EditorPropertyWeaverSlot::_build_menu()
 		const Array webs = WeaverSlotLibrary::collect_web_slots();
 		const Ref<WeaverSlot> anchor_slot = kind == WeaverSlotLibrary::KIND_CAMERA ? _get_anchor_slot_of_camera() : Ref<WeaverSlot>();
 
-		// Lanes of the view anchored in the camera's own viewport come first.
+		// Lanes (WeaverSpiders) of the view anchored in the camera's own viewport come first.
 		if (anchor_slot.is_valid())
 		{
 			menu->add_separator("In " + WeaverSlotLibrary::get_display_name(anchor_slot) + " (this camera's viewport)");
