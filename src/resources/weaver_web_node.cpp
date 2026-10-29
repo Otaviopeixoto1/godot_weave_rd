@@ -1,9 +1,9 @@
 #include "weaver_web_node.h"
-
 #include "../rendering_weaver.h"
+
 #include "core/object/class_db.h"
 #include "core/object/callable_mp.h"
-
+#include "modules/gdscript/gdscript.h"
 
 void WeaverWebNode::_notification(int p_what)
 {
@@ -32,31 +32,6 @@ void WeaverWebNode::_internal_weaver_render_callback(int p_effect_callback_type,
 
 	// TODO: Add another callback where the user can preregister the required resources for this node
 
-}
-
-WeaverWebNode::WeaverWebNode()
-{
-	RenderingWeaver *weaver = RenderingWeaver::get_singleton();
-	if (weaver != nullptr)
-	{
-		node = weaver->node_create();
-	}
-}
-
-WeaverWebNode::~WeaverWebNode()
-{
-	RenderingWeaver *weaver = RenderingWeaver::get_singleton();
-	if (weaver != nullptr && node.is_valid())
-	{
-		weaver->free_rid(node);
-	}
-}
-
-void WeaverWebNode::set_spider(RID p_spider)
-{
-	//TODO: trigger the signal for the node containing this WeaverSpider resource to signal to RenderingWeaver that its active
-	//   ----> MAYBE NOT NECESSARY SINCE WE CAN USE THAT ALL RESOURCES INITIALIZE BEFORE THE SCENE (???)
-	spider = p_spider;
 }
 
 void WeaverWebNode::_attach_script()

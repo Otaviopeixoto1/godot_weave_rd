@@ -27,15 +27,9 @@ protected:
 	void _internal_weaver_render_callback(int p_effect_callback_type, const RenderData *p_render_data); // Replace with Variant arguments ???
 
 public:
-	WeaverWebNode();
-	virtual ~WeaverWebNode();
-
-	void set_spider(RID p_spider);
-	virtual RID get_rid() const override { return node; }
+	WeaverWebNode() = default;
+	virtual ~WeaverWebNode() = default;
 
 private:
-	RID node;
-	RID spider;
-
 	void _attach_script();
 };

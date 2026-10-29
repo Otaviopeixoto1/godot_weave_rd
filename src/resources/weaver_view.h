@@ -2,7 +2,11 @@
 
 #include "core/io/resource.h"
 #include "weaver_spider.h"
-class WeaverWeb;
+#include "weaver_slot.h"
+
+#include "core/variant/typed_array.h"
+#include "core/object/object.h"
+#include "core/object/class_db.h"
 
 class WeaverView : public Resource
 {
@@ -12,17 +16,16 @@ protected:
 	static void _bind_methods();
 
 public:
-	WeaverView();
-	virtual ~WeaverView();
+	WeaverView() = default;
+	virtual ~WeaverView() = default;
 
-	void _set_web(RID p_web);
-	virtual RID get_rid() const override { return view; }
+	void set_slot(const Ref<WeaverViewSlot> &p_slot);
+	Ref<WeaverViewSlot> get_slot() const;
 
 	void set_weaver_spiders(const TypedArray<WeaverSpider> &p_weaver_spiders);
 	TypedArray<WeaverSpider> get_weaver_spiders() const;
 
 private:
-	RID view;
-	RID web;
+	Ref<WeaverViewSlot> slot;
 	LocalVector<Ref<WeaverSpider>> weaver_spiders;
 };

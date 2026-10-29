@@ -2,26 +2,30 @@
 
 #include "scene/resources/compositor.h"
 #include "weaver_web_node.h"
+#include "weaver_slot.h"
 
-class WeaverSpider : public Resource 
+#include "core/variant/typed_array.h"
+#include "core/object/object.h"
+#include "core/object/class_db.h"
+
+class WeaverSpider : public Resource
 {
 	GDCLASS(WeaverSpider, Resource);
 
 protected:
 	static void _bind_methods();
 public:
-	WeaverSpider();
-	virtual ~WeaverSpider();
+	WeaverSpider() = default;
+	virtual ~WeaverSpider() = default;
 
-	void set_view(RID p_view);
-	virtual RID get_rid() const override { return spider; }
+	void set_slot(const Ref<WeaverCameraSlot> &p_slot);
+	Ref<WeaverCameraSlot> get_slot() const;
 
-	// TODO: ADD INPUT FOR vanilla CompositorEffects as well
-	void set_weaver_nodes(const TypedArray<WeaverWebNode> &p_weaver_nodes);
-	TypedArray<WeaverWebNode> get_weaver_nodes() const;
+	// Entries are WeaverWebNodes or plain CompositorEffects. Null entries are kept so the inspector can add rows.
+	void set_weaver_nodes(const TypedArray<Resource> &p_weaver_nodes);
+	TypedArray<Resource> get_weaver_nodes() const;
 
 private:
-	RID spider;
-	RID view;
-	LocalVector<Ref<WeaverWebNode>> weaver_nodes;
+	Ref<WeaverCameraSlot> slot;
+	LocalVector<Ref<Resource>> weaver_nodes;
 };

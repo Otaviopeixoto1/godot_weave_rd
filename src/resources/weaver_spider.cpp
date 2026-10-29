@@ -1,73 +1,62 @@
 #include "weaver_spider.h"
-#include "core/object/class_db.h"
 
-#include "../rendering_weaver.h"
+#include "core/object/callable_mp.h"
+
 
 void WeaverSpider::_bind_methods()
 {
+	ClassDB::bind_method(D_METHOD("set_slot", "slot"), &WeaverSpider::set_slot);
+	ClassDB::bind_method(D_METHOD("get_slot"), &WeaverSpider::get_slot);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "slot", PROPERTY_HINT_RESOURCE_TYPE, "WeaverCameraSlot"), "set_slot", "get_slot");
+
 	ClassDB::bind_method(D_METHOD("set_weaver_nodes", "weaver_nodes"), &WeaverSpider::set_weaver_nodes);
 	ClassDB::bind_method(D_METHOD("get_weaver_nodes"), &WeaverSpider::get_weaver_nodes);
-	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "weaver_nodes", PROPERTY_HINT_ARRAY_TYPE, MAKE_RESOURCE_TYPE_HINT("WeaverWebNode")), "set_weaver_nodes", "get_weaver_nodes");
+	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "weaver_nodes", PROPERTY_HINT_ARRAY_TYPE, MAKE_RESOURCE_TYPE_HINT("WeaverWebNode,CompositorEffect")), "set_weaver_nodes", "get_weaver_nodes");
 }
 
-WeaverSpider::WeaverSpider()
+
+void WeaverSpider::set_slot(const Ref<WeaverCameraSlot> &p_slot) {
+	slot = p_slot;
+	emit_changed();
+}
+
+Ref<WeaverCameraSlot> WeaverSpider::get_slot() const {
+	return slot;
+}
+
+
+void WeaverSpider::set_weaver_nodes(const TypedArray<Resource> &p_weaver_nodes)
 {
-	RenderingWeaver *weaver = RenderingWeaver::get_singleton();
-	if (weaver != nullptr)
+	const Callable forward_changed = callable_mp((Resource *)this, &Resource::emit_changed);
+
+	// Reference counted connections, so a node listed twice stays connected until its last entry is removed.
+	for (const Ref<Resource> &weaver_node : weaver_nodes)
 	{
-		spider = weaver->spider_create();
+		if (weaver_node.is_valid()) weaver_node->disconnect_changed(forward_changed);
 	}
-}
-
-WeaverSpider::~WeaverSpider()
-{
-	RenderingWeaver *weaver = RenderingWeaver::get_singleton();
-	if (weaver != nullptr && spider.is_valid())
-	{
-		weaver->free_rid(spider);
-	}
-}
-
-void WeaverSpider::set_view(RID p_view)
-{
-	//TODO: trigger the signal for the node containing this WeaverSpider resource to signal to RenderingWeaver that its active
-	//   ----> MAYBE NOT NECESSARY SINCE WE CAN USE THAT ALL RESOURCES INITIALIZE BEFORE THE SCENE (???)
-	view = p_view;
-}
-
-void WeaverSpider::set_weaver_nodes(const TypedArray<WeaverWebNode> &p_weaver_nodes)
-{
-	print_line("WEAVERSPIDER SET NODES");
-	Vector<RID> node_rids;
 	weaver_nodes.clear();
 
 	for (int i = 0; i < p_weaver_nodes.size(); i++)
 	{
-		// Cast to proper ref, if our object isn't a CompositorEffect resource this will be an empty Ref.
-		Ref<WeaverWebNode> weaver_node = p_weaver_nodes[i];
+		Ref<Resource> weaver_node = p_weaver_nodes[i];
 
-		// We add the effect even if this is an empty Ref, this allows the UI to add new entries.
+		if (weaver_node.is_valid() && !Object::cast_to<WeaverWebNode>(weaver_node.ptr()) && !Object::cast_to<CompositorEffect>(weaver_node.ptr()))
+		{
+			ERR_PRINT(vformat("WeaverSpider: entry %d is a %s, expected a WeaverWebNode or a CompositorEffect. It was cleared.", i, weaver_node->get_class()));
+			weaver_node.unref();
+		}
+
 		weaver_nodes.push_back(weaver_node);
 
-		// But we only add a rid for valid Refs
-		if (weaver_node.is_valid())
-		{
-			RID rid = weaver_node->get_rid();
-
-			// Hydrate all new WeaverWebNode with this WeaverSpider reference
-			weaver_node->set_spider(spider);
-			print_line(vformat("SPIDER HYDRATE Node %s", rid));
-
-			node_rids.push_back(rid);
-		}
+		if (weaver_node.is_valid()) weaver_node->connect_changed(forward_changed, CONNECT_REFERENCE_COUNTED);
 	}
 
-	RenderingWeaver::get_singleton()->spider_set_nodes(spider, node_rids);
+	emit_changed();
 }
 
-TypedArray<WeaverWebNode> WeaverSpider::get_weaver_nodes() const
+TypedArray<Resource> WeaverSpider::get_weaver_nodes() const
 {
-	TypedArray<WeaverWebNode> arr;
+	TypedArray<Resource> arr;
 
 	for (uint32_t i = 0; i < weaver_nodes.size(); i++) {
 		arr.push_back(weaver_nodes[i]);
