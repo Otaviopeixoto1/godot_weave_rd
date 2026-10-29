@@ -13,7 +13,7 @@ class Camera3D;
 
 //
 // RenderingWeaver is the singleton representing the binding registry between WeaverWebs and the scene.
-// It stores the active Web and the nests registered from scenes and resolves which camera runs which lane.
+// It stores the active Web and the anchors and nests registered from scenes and resolves which camera runs which lane.
 // Registration order does not matter: an entry stays pending (with a reason) until the missing piece is registered.
 //
 // Everything is stored by ObjectID, so nodes freed without unregistering are simply dropped on the next resolve.
@@ -49,18 +49,19 @@ public:
 	virtual ~RenderingWeaver();
 	static RenderingWeaver *get_singleton();
 
-	// Sets the currently active WeaverWeb. Only one owner (a FrameWeaver) can hold the active Web. Returns ERR_ALREADY_IN_USE if another owner holds it.
+	// Sets the currently active WeaverWeb. Only one owner (a WeaverSpinner) can hold the active Web. Returns ERR_ALREADY_IN_USE if another owner holds it.
 	Error set_active_web(Object *p_owner, const Ref<WeaverWeb> &p_web);
 	void clear_active_web(Object *p_owner);
 	Ref<WeaverWeb> get_active_web() const;
+	ObjectID get_active_web_owner() const { return active_web_owner; }
 
-	void register_view_nest(Node *p_nest, Viewport *p_viewport, const Ref<WeaverViewSlot> &p_slot);
-	void unregister_view_nest(Node *p_nest);
+	void register_view_anchor(Node *p_anchor, Viewport *p_viewport, const Ref<WeaverViewSlot> &p_slot);
+	void unregister_view_anchor(Node *p_anchor);
 
 	void register_camera_nest(Node *p_nest, Camera3D *p_camera, const Ref<WeaverCameraSlot> &p_slot);
 	void unregister_camera_nest(Node *p_nest);
 
-	PackedStringArray get_warnings(Node *p_nest) const;
+	PackedStringArray get_warnings(const Node *p_nest) const;
 	Array get_debug_state() const;
 
 	const HashMap<ObjectID, CameraBinding> &get_camera_bindings() const { return camera_nests; }
@@ -74,7 +75,7 @@ private:
 	ObjectID active_web_owner;
 	Ref<WeaverWeb> active_web;
 
-	HashMap<ObjectID, ViewBinding> view_nests;
+	HashMap<ObjectID, ViewBinding> view_anchors;
 	HashMap<ObjectID, CameraBinding> camera_nests;
 
 	bool resolve_queued = false;

@@ -9,7 +9,8 @@
 #include "src/resources/weaver_spider.h"
 #include "src/resources/weaver_web_node.h"
 
-#include "src/frame_weaver.h"
+#include "src/weaver_spinner.h"
+#include "src/weaver_view_anchor.h"
 #include "src/weaver_spider_nest.h"
 
 
@@ -36,7 +37,8 @@ void initialize_godot_weave_rd_module(ModuleInitializationLevel p_level)
 		ClassDB::register_class<WeaverView>();
 		ClassDB::register_class<WeaverWeb>();
 
-		ClassDB::register_class<FrameWeaver>();
+		ClassDB::register_class<WeaverSpinner>();
+		ClassDB::register_class<WeaverViewAnchor>();
 		ClassDB::register_class<WeaverSpiderNest>();
 		return;
 	}

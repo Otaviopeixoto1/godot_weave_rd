@@ -3,30 +3,24 @@
 #include "scene/main/node.h"
 #include "resources/weaver_spider.h"
 
+//
+// Binds its parent Camera3D to the lane with the same WeaverCameraSlot (in the view anchored to the camera parent viewport)
+//
 class WeaverSpiderNest : public Node
 {
 	GDCLASS(WeaverSpiderNest, Node);
-
-	//
-	//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	// This should not be immediatelly tied to a specific WeaverSpider... We need to make it dynamic and relly on binding indexes instead of handles to specific resources.
-	// THEREFORE, JUST EXPOSE A BINDING ID THAT THE USER CAN SET AND THE CAMERA WILL BE ASSIGNED TO A SPIDER AT RUNTIME
-	//
-	// AT RUNTIME, INJECT THE Compositor into the camera. Setup vanilla passes as well as WeaverPasses
-	//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 protected:
 	void _notification(int p_what);
 	static void _bind_methods();
 
 public:
-	void set_spider(const Ref<WeaverSpider> &p_spider);
-	Ref<WeaverSpider> get_spider() const;
+	void set_slot(const Ref<WeaverCameraSlot> &p_slot);
+	Ref<WeaverCameraSlot> get_slot() const;
 
-	void set_slot(int slot);
-	int get_slot();
+	PackedStringArray get_configuration_warnings() const override;
 
 private:
-	int slot{ 0 }; 
-	Ref<WeaverSpider> spider;
+	Ref<WeaverCameraSlot> slot;
+
+	void _register();
 };

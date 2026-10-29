@@ -40,8 +40,8 @@ void RenderingWeaver::_bind_methods()
 	ClassDB::bind_method(D_METHOD("clear_active_web", "owner"), &RenderingWeaver::clear_active_web);
 	ClassDB::bind_method(D_METHOD("get_active_web"), &RenderingWeaver::get_active_web);
 
-	ClassDB::bind_method(D_METHOD("register_view_nest", "nest", "viewport", "slot"), &RenderingWeaver::register_view_nest);
-	ClassDB::bind_method(D_METHOD("unregister_view_nest", "nest"), &RenderingWeaver::unregister_view_nest);
+	ClassDB::bind_method(D_METHOD("register_view_anchor", "anchor", "viewport", "slot"), &RenderingWeaver::register_view_anchor);
+	ClassDB::bind_method(D_METHOD("unregister_view_anchor", "anchor"), &RenderingWeaver::unregister_view_anchor);
 
 	ClassDB::bind_method(D_METHOD("register_camera_nest", "nest", "camera", "slot"), &RenderingWeaver::register_camera_nest);
 	ClassDB::bind_method(D_METHOD("unregister_camera_nest", "nest"), &RenderingWeaver::unregister_camera_nest);
@@ -108,23 +108,23 @@ Ref<WeaverWeb> RenderingWeaver::get_active_web() const
 	return active_web;
 }
 
-void RenderingWeaver::register_view_nest(Node *p_nest, Viewport *p_viewport, const Ref<WeaverViewSlot> &p_slot)
+void RenderingWeaver::register_view_anchor(Node *p_anchor, Viewport *p_viewport, const Ref<WeaverViewSlot> &p_slot)
 {
-	ERR_FAIL_NULL(p_nest);
+	ERR_FAIL_NULL(p_anchor);
 	ERR_FAIL_NULL(p_viewport);
 
 	ViewBinding binding;
 	binding.viewport = p_viewport->get_instance_id();
 	binding.slot = p_slot;
-	view_nests[p_nest->get_instance_id()] = binding;
+	view_anchors[p_anchor->get_instance_id()] = binding;
 
 	_queue_resolve();
 }
 
-void RenderingWeaver::unregister_view_nest(Node *p_nest)
+void RenderingWeaver::unregister_view_anchor(Node *p_anchor)
 {
-	ERR_FAIL_NULL(p_nest);
-	if (view_nests.erase(p_nest->get_instance_id()))
+	ERR_FAIL_NULL(p_anchor);
+	if (view_anchors.erase(p_anchor->get_instance_id()))
 	{
 		_queue_resolve();
 	}
@@ -188,8 +188,8 @@ static int _viewport_depth(const Viewport *p_viewport)
 	return depth;
 }
 
-// Mirrors RendererViewport::_sort_active_viewports: nested viewports render first (deepest level first, across
-// all branches), parents last. Within a level the engine keeps creation order; tree order stands in for it here.
+// Taken from RendererViewport::_sort_active_viewports. Nested viewports render first (deepest level first, across
+// all branches), parents last. Within a level the engine keeps creation order but, for now, we use tree order here.
 static bool _renders_before(const Viewport *p_a, const Viewport *p_b)
 {
 	if (p_a->is_ancestor_of(p_b)) return false;
@@ -204,14 +204,14 @@ static bool _renders_before(const Viewport *p_a, const Viewport *p_b)
 
 void RenderingWeaver::_resolve()
 {
-	// Drop nests that were freed without unregistering.
+	// Drop anchors and nests that were freed without unregistering.
 	{
 		LocalVector<ObjectID> freed;
-		for (const KeyValue<ObjectID, ViewBinding> &E : view_nests)
+		for (const KeyValue<ObjectID, ViewBinding> &E : view_anchors)
 		{
 			if (ObjectDB::get_instance(E.key) == nullptr) freed.push_back(E.key);
 		}
-		for (const ObjectID &id : freed) view_nests.erase(id);
+		for (const ObjectID &id : freed) view_anchors.erase(id);
 
 		freed.clear();
 		for (const KeyValue<ObjectID, CameraBinding> &E : camera_nests)
@@ -228,6 +228,7 @@ void RenderingWeaver::_resolve()
 		active_web_owner = ObjectID();
 	}
 
+	// Parse the WeaverWeb:
 	TypedArray<WeaverView> web_views;
 	HashMap<const WeaverSlot *, int> view_of_slot;
 	Array web_errors;
@@ -252,10 +253,10 @@ void RenderingWeaver::_resolve()
 	}
 
 	//
-	// View nests
+	// Validate: View Anchors
 	//
-	HashMap<ObjectID, LocalVector<ObjectID>> nests_in_viewport;
-	for (KeyValue<ObjectID, ViewBinding> &E : view_nests)
+	HashMap<ObjectID, LocalVector<ObjectID>> anchors_in_viewport;
+	for (KeyValue<ObjectID, ViewBinding> &E : view_anchors)
 	{
 		ViewBinding &binding = E.value;
 		binding.view = -1;
@@ -267,7 +268,7 @@ void RenderingWeaver::_resolve()
 			binding.reason = "The viewport was freed.";
 			continue;
 		}
-		nests_in_viewport[binding.viewport].push_back(E.key);
+		anchors_in_viewport[binding.viewport].push_back(E.key);
 
 		if (binding.slot.is_null())
 		{
@@ -291,41 +292,41 @@ void RenderingWeaver::_resolve()
 		binding.view = *view;
 	}
 
-	// One viewport can only run one view.
-	HashMap<ObjectID, ObjectID> nest_of_viewport;
-	for (const KeyValue<ObjectID, LocalVector<ObjectID>> &E : nests_in_viewport)
+	// Force one view per viewport:
+	HashMap<ObjectID, ObjectID> anchor_of_viewport;
+	for (const KeyValue<ObjectID, LocalVector<ObjectID>> &E : anchors_in_viewport)
 	{
 		if (E.value.size() == 1)
 		{
-			nest_of_viewport.insert(E.key, E.value[0]);
+			anchor_of_viewport.insert(E.key, E.value[0]);
 			continue;
 		}
 		for (const ObjectID &id : E.value)
 		{
-			ViewBinding &binding = view_nests[id];
+			ViewBinding &binding = view_anchors[id];
 			binding.view = -1;
-			binding.reason = "Its viewport has more than one view nest.";
-			binding.warnings.push_back(vformat("%d view nests are bound to the same viewport. Only one is allowed.", E.value.size()));
+			binding.reason = "Its viewport has more than one view anchor.";
+			binding.warnings.push_back(vformat("%d view anchors are bound to the same viewport. Only one is allowed.", E.value.size()));
 		}
 	}
 
-	// One view slot bound to several viewports, and viewports rendering in a different order than the Web declares.
+	// Force view slot bound to one single viewport and Validate SceneTree Vewport order vs WeaverWeb view order:
 	{
 		LocalVector<ObjectID> resolved;
-		for (const KeyValue<ObjectID, ViewBinding> &E : view_nests)
+		for (const KeyValue<ObjectID, ViewBinding> &E : view_anchors)
 		{
 			if (E.value.view >= 0) resolved.push_back(E.key);
 		}
 
 		for (const ObjectID &id_a : resolved)
 		{
-			ViewBinding &a = view_nests[id_a];
+			ViewBinding &a = view_anchors[id_a];
 			const Viewport *viewport_a = Object::cast_to<Viewport>(ObjectDB::get_instance(a.viewport));
 
 			for (const ObjectID &id_b : resolved)
 			{
 				if (id_a == id_b) continue;
-				const ViewBinding &b = view_nests[id_b];
+				const ViewBinding &b = view_anchors[id_b];
 				const Viewport *viewport_b = Object::cast_to<Viewport>(ObjectDB::get_instance(b.viewport));
 
 				if (a.view == b.view)
@@ -341,7 +342,8 @@ void RenderingWeaver::_resolve()
 					{
 						a.warnings.push_back(vformat("Render order: the Web declares view %d %s view %d, but viewport %s renders %s viewport %s.",
 								a.view, a_first_in_web ? "before" : "after", b.view,
-								viewport_a->get_name(), a_renders_first ? "before" : "after", viewport_b->get_name()));
+								viewport_a->get_name(), a_renders_first ? "before" : "after", viewport_b->get_name())
+						);
 					}
 				}
 			}
@@ -349,7 +351,7 @@ void RenderingWeaver::_resolve()
 	}
 
 	//
-	// Camera nests
+	// validate: Spider Nests
 	//
 	HashMap<ObjectID, LocalVector<ObjectID>> nests_on_camera;
 	for (KeyValue<ObjectID, CameraBinding> &E : camera_nests)
@@ -389,16 +391,16 @@ void RenderingWeaver::_resolve()
 			continue;
 		}
 
-		const ObjectID *view_nest = nest_of_viewport.getptr(camera->get_viewport()->get_instance_id());
-		if (view_nest == nullptr)
+		const ObjectID *view_anchor = anchor_of_viewport.getptr(camera->get_viewport()->get_instance_id());
+		if (view_anchor == nullptr)
 		{
-			binding.reason = vformat("No view nest is bound to the camera's viewport (%s).", camera->get_viewport()->get_name());
+			binding.reason = vformat("No view anchor is bound to the camera's viewport (%s).", camera->get_viewport()->get_name());
 			continue;
 		}
-		const ViewBinding &view_binding = view_nests[*view_nest];
+		const ViewBinding &view_binding = view_anchors[*view_anchor];
 		if (view_binding.view < 0)
 		{
-			binding.reason = "The view nest of the camera's viewport is pending: " + view_binding.reason;
+			binding.reason = "The view anchor of the camera's viewport is pending: " + view_binding.reason;
 			continue;
 		}
 
@@ -456,7 +458,7 @@ void RenderingWeaver::_resolve()
 			}
 			if (lane < 0 || !reported)
 			{
-				for (KeyValue<ObjectID, ViewBinding> &E : view_nests)
+				for (KeyValue<ObjectID, ViewBinding> &E : view_anchors)
 				{
 					if (E.value.view == view) { E.value.warnings.push_back(message); reported = true; }
 				}
@@ -464,7 +466,7 @@ void RenderingWeaver::_resolve()
 		}
 		if (!reported)
 		{
-			for (KeyValue<ObjectID, ViewBinding> &E : view_nests) E.value.warnings.push_back(message);
+			for (KeyValue<ObjectID, ViewBinding> &E : view_anchors) E.value.warnings.push_back(message);
 			for (KeyValue<ObjectID, CameraBinding> &E : camera_nests) E.value.warnings.push_back(message);
 		}
 	}
@@ -474,11 +476,11 @@ void RenderingWeaver::_resolve()
 //
 // Queries
 //
-PackedStringArray RenderingWeaver::get_warnings(Node *p_nest) const
+PackedStringArray RenderingWeaver::get_warnings(const Node *p_nest) const
 {
 	ERR_FAIL_NULL_V(p_nest, PackedStringArray());
 
-	if (const ViewBinding *binding = view_nests.getptr(p_nest->get_instance_id()))
+	if (const ViewBinding *binding = view_anchors.getptr(p_nest->get_instance_id()))
 	{
 		return binding->warnings;
 	}
@@ -510,7 +512,7 @@ Array RenderingWeaver::get_debug_state() const
 	LocalVector<DebugEntry> entries;
 
 	// Nests freed without unregistering are dropped on the next resolve; skip them until then.
-	for (const KeyValue<ObjectID, ViewBinding> &E : view_nests)
+	for (const KeyValue<ObjectID, ViewBinding> &E : view_anchors)
 	{
 		if (ObjectDB::get_instance(E.key) == nullptr) continue;
 
