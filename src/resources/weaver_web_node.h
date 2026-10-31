@@ -17,8 +17,8 @@
 // (The inspector properties are written on the main thread)
 //
 // Overriding, from the most derived implementation down:
-// - GDScript: override _render, _setup, _cleanup
-// - C++: override the protected _render_native, _setup_native, _cleanup_native.
+// -GDScript: override _render, _setup, _cleanup
+// -C++: override the protected _render_native, _setup_native, _cleanup_native.
 // When a script or extension overrides a hook, the native implementation is NOT CALLED for that hook.
 //
 class WeaverWebNode : public Resource
@@ -78,6 +78,10 @@ public:
 	void render(int p_stage, const RenderData *p_render_data);
 	void setup();
 	void cleanup();
+
+	// Marks a section of _render() to measure in the profiler. Sections cant be nested and must stay outside compute and draw lists.
+	void begin_capture(const String &p_name);
+	void end_capture();
 
 private:
 	bool enabled = true;

@@ -1,4 +1,5 @@
 #include "weaver_web_node.h"
+#include "weaver_profiler.h"
 
 #include "core/object/class_db.h"
 
@@ -88,6 +89,14 @@ void WeaverWebNode::cleanup() {
 	}
 }
 
+void WeaverWebNode::begin_capture(const String &p_name) {
+	WeaverProfiler::begin_capture(p_name);
+}
+
+void WeaverWebNode::end_capture() {
+	WeaverProfiler::end_capture();
+}
+
 
 void WeaverWebNode::_bind_methods()
 {
@@ -118,6 +127,9 @@ void WeaverWebNode::_bind_methods()
 	ClassDB::bind_method(D_METHOD("set_needs_separate_specular", "enable"), &WeaverWebNode::set_needs_separate_specular);
 	ClassDB::bind_method(D_METHOD("get_needs_separate_specular"), &WeaverWebNode::get_needs_separate_specular);
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "needs_separate_specular"), "set_needs_separate_specular", "get_needs_separate_specular");
+
+	ClassDB::bind_method(D_METHOD("begin_capture", "name"), &WeaverWebNode::begin_capture);
+	ClassDB::bind_method(D_METHOD("end_capture"), &WeaverWebNode::end_capture);
 
 	GDVIRTUAL_BIND(_render, "stage", "render_data");
 	GDVIRTUAL_BIND(_setup);

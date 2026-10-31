@@ -4,6 +4,7 @@
 #include "core/config/engine.h"
 
 #include "src/rendering_weaver.h"
+#include "src/weaver_profiler.h"
 #include "src/resources/weaver_slot.h"
 #include "src/resources/weaver_web.h"
 #include "src/resources/weaver_spider.h"
@@ -27,6 +28,7 @@ void initialize_godot_weave_rd_module(ModuleInitializationLevel p_level)
 		memnew(RenderingWeaver);
 		ClassDB::register_class<RenderingWeaver>();
 		Engine::get_singleton()->add_singleton(Engine::Singleton("RenderingWeaver", RenderingWeaver::get_singleton()));
+		WeaverProfiler::initialize();
 		return;
 	}
 
@@ -69,6 +71,7 @@ void uninitialize_godot_weave_rd_module(ModuleInitializationLevel p_level)
 {
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SERVERS)
 	{
+		WeaverProfiler::finalize();
 		if (RenderingWeaver *weaver = RenderingWeaver::get_singleton())
 		{
 			Engine::get_singleton()->remove_singleton("RenderingWeaver");
