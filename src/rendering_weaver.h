@@ -1,50 +1,94 @@
 #pragma once
 
 #include "core/object/object.h"
+#include "core/templates/hash_map.h"
+#include "core/variant/typed_array.h"
 
-// Central manager class for all WeaverWebs .
-//TODO: Define WeaverPass as the framegraph pass 
+#include "resources/weaver_web.h"
+#include "resources/weaver_slot.h"
+
+class Node;
+class Viewport;
+class Camera3D;
+class WeaverSpiderInstance;
+
+//
+// RenderingWeaver is the singleton representing the binding registry between WeaverWebs and the scene.
+// It stores the active Web and the anchors and nests registered from scenes and resolves which camera runs which lane (WeaverSpider).
+// Registration order does not matter: an entry stays pending (with a reason) until the missing piece is registered.
+//
+// Everything is stored by ObjectID, so nodes freed without unregistering are simply dropped on the next resolve.
+// _resolve() is queued to be called at most once per frame, and emits the bindings_changed signal once per batch of changes.
+//
 class RenderingWeaver : public Object
 {
 	GDCLASS(RenderingWeaver, Object);
-	//
-	// TODO:
-	// -Given a scene we will detect and manage all compositors and compositor effects within it. We can make a WeaverContext resource for storing all used scenes and their interdependencies
-	// -We will track WeaverCompositorEffects in this WeaverContext resource for each viewport and for each scene that is associated with it
-	// --What really matters is the output of the viewport. Only one camera can be active per viewport so other cameras wont matter. WE HOOK INTO A VIEWPORT OUTPUT !
-	// 
-	// -We can give a node to the user for setting the active weaver context for all the scene (for now it should be exclusive like WorldEnvironment but it may work just like
-	//  a viewport in the future)
-	// --We use the plugin GraphEdit nodes to make it easy to edit the dependency graphs especially between scenes ! This will allow the creation and assignment of
-	//   WeaverEffects to the scene Cameras and WorldEnvironments
-	// --Each effect should have inputs and outputs. If an input is not satisfied (missing dependencies on the scene) it will not be used
-	//
-	//
-	// 1) We need to have an intuitive way of overriding the active compositors:
-	//  -We must override the camera compositor since they have priority and are more granular
-	//
-	// 2) No scene tracking (maybe only for the plugin to display where are the resources being attached):
-	//  -We use other resources to represent messages (like Resource/ScriptableObject signal busses)
-	//  -Dependencies will be based on these resources. Each effect will have inputs and outputs where we can assign those resources
-	//  -Compile the graph at runtime and check if dependencies are setup. If they are not we disable the paths using them
-	//
-	// -> We still need to compile the graph ! we can use a PER-VIEWPORT REGISTRATION and dynamically compile !
-	// -> Build a resource database that will only track these special WeaverResource types and later we can display them on the plugin !
-	// -> For each pass we can declare input and output resources. We will reference those inputs and outputs inside other passes
-	//
-	// -> WE NEED TO HAVE A CUSTOM Compositor Resource class that will expose to the user the ability to ad normal passes as well as weaver passes and integrate with the custom viewports class
-	// -Custom viewport is not a good idea for the state manager class -> MAKE A WeaverContext/Environment Node to store state. Similar to WorldEnvironment it shall only be one per scene
-	//
 
+public:
+	struct ViewBinding
+	{
+		ObjectID viewport;
+		Ref<WeaverViewSlot> slot;
+
+		int view = -1;
+		String reason; // Reason why its not resolved. Empty when resolved.
+		PackedStringArray warnings;
+	};
+
+	struct CameraBinding
+	{
+		ObjectID camera;
+		Ref<WeaverCameraSlot> slot;
+
+		int view = -1;
+		int lane = -1;
+		String reason; // Reason why its not resolved. Empty when resolved.
+		PackedStringArray warnings;
+	};
+
+	RenderingWeaver();
+	virtual ~RenderingWeaver();
+	static RenderingWeaver *get_singleton();
+
+	// Sets the currently active WeaverWeb. Only one owner (a WeaverSpinner) can hold the active Web. Returns ERR_ALREADY_IN_USE if another owner holds it.
+	Error set_active_web(Object *p_owner, const Ref<WeaverWeb> &p_web);
+	void clear_active_web(Object *p_owner);
+	Ref<WeaverWeb> get_active_web() const;
+	ObjectID get_active_web_owner() const { return active_web_owner; }
+
+	void register_view_anchor(Node *p_anchor, Viewport *p_viewport, const Ref<WeaverViewSlot> &p_slot);
+	void unregister_view_anchor(Node *p_anchor);
+
+	void register_camera_nest(Node *p_nest, Camera3D *p_camera, const Ref<WeaverCameraSlot> &p_slot);
+	void unregister_camera_nest(Node *p_nest);
+
+	PackedStringArray get_warnings(const Node *p_nest) const;
+	Array get_debug_state() const;
+
+	const HashMap<ObjectID, CameraBinding> &get_camera_bindings() const { return camera_nests; }
+
+protected:
+	static void _bind_methods();
 
 private:
 	static RenderingWeaver *singleton;
 
-protected:
-	static void _bind_methods();
-	void add(int value);
+	ObjectID active_web_owner;
+	Ref<WeaverWeb> active_web;
 
-public:
-	RenderingWeaver();
-	static RenderingWeaver *get_singleton();
+	HashMap<ObjectID, ViewBinding> view_anchors;
+	HashMap<ObjectID, CameraBinding> camera_nests;
+
+	// Runtime compositor of each registered/resolved camera.
+	HashMap<ObjectID, WeaverSpiderInstance *> spider_instances;
+
+	bool resolve_queued = false;
+
+	void _queue_resolve();
+	void _flush();
+	void _resolve();
+
+
+	void _sync_spider_instances(const TypedArray<WeaverView> &p_web_views);
+	void _free_spider_instance(const ObjectID &p_nest);
 };
