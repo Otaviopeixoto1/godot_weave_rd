@@ -10,9 +10,9 @@
 #include "src/resources/weaver_spider.h"
 #include "src/resources/weaver_web_node.h"
 
-#include "src/weaver_spinner.h"
-#include "src/weaver_view_anchor.h"
-#include "src/weaver_spider_nest.h"
+#include "src/nodes/weaver_spinner.h"
+#include "src/nodes/weaver_view_anchor.h"
+#include "src/nodes/weaver_spider_nest.h"
 
 #ifdef TOOLS_ENABLED
 #include "core/config/project_settings.h"

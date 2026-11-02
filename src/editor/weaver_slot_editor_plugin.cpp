@@ -1,8 +1,8 @@
 #include "weaver_slot_editor_plugin.h"
 #include "resources/weaver_spider.h"
 #include "resources/weaver_view.h"
-#include "weaver_spider_nest.h"
-#include "weaver_view_anchor.h"
+#include "nodes/weaver_spider_nest.h"
+#include "nodes/weaver_view_anchor.h"
 
 #include "core/io/resource_loader.h"
 #include "core/object/callable_mp.h"
