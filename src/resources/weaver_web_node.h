@@ -5,6 +5,7 @@
 #include "core/object/gdvirtual.gen.h"
 #include "servers/rendering/storage/render_data.h"
 
+#include "rendering/weaver_render_context.h"
 
 //
 // WeaverWebNode A pass inside a Stage in a WeaverSpider. This is only a description the actual CompositorEffect
@@ -83,7 +84,12 @@ public:
 	void begin_capture(const String &p_name);
 	void end_capture();
 
+	Ref<WeaverRenderContext> get_render_context();
+	void free_render_context();
+
 private:
+	Ref<WeaverRenderContext> render_context;
+
 	bool enabled = true;
 	bool access_resolved_color = false;
 	bool access_resolved_depth = false;

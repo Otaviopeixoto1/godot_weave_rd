@@ -6,10 +6,23 @@
 #include "scene/main/node.h"
 #include "scene/main/viewport.h"
 #include "scene/3d/camera_3d.h"
+#include "servers/rendering/rendering_server.h"
 
 
 
 RenderingWeaver *RenderingWeaver::singleton = nullptr;
+
+// Runs on the render thread.
+static void _free_samplers(const Array &p_rids)
+{
+	RenderingDevice *rd = RenderingServer::get_singleton()->get_rendering_device();
+	if (rd == nullptr) return;
+
+	for (int i = 0; i < p_rids.size(); i++)
+	{
+		rd->free_rid(p_rids[i]);
+	}
+}
 
 RenderingWeaver *RenderingWeaver::get_singleton()
 {
@@ -33,6 +46,26 @@ RenderingWeaver::~RenderingWeaver()
 	if (active_web.is_valid())
 	{
 		active_web->disconnect_changed(callable_mp(this, &RenderingWeaver::_queue_resolve));
+	}
+
+	// Samplers still referenced here come from contexts that were never freed. The ones on the main device are freed
+	// (the RenderingServer still exists: modules are uninitialized before it is finished). Other devices may already be gone.
+	RenderingServer *rs = RenderingServer::get_singleton();
+	RenderingDevice *main_device = rs != nullptr ? rs->get_rendering_device() : nullptr;
+	Array rids;
+	for (const KeyValue<SamplerKey, CachedSampler> &E : samplers)
+	{
+		if (E.key.device == main_device)
+		{
+			rids.push_back(E.value.rid);
+		}
+	}
+	samplers.clear();
+	sampler_keys.clear();
+	if (!rids.is_empty())
+	{
+		rs->call_on_render_thread(callable_mp_static(&_free_samplers).bind(rids));
+		rs->sync();
 	}
 
 	if (singleton == this)
@@ -533,6 +566,83 @@ void RenderingWeaver::_free_spider_instance(const ObjectID &p_nest)
 	if (instance == nullptr) { return; }
 	memdelete(*instance);
 	spider_instances.erase(p_nest);
+}
+
+
+//
+// Samplers
+//
+uint32_t RenderingWeaver::SamplerKeyHasher::hash(const SamplerKey &p_key)
+{
+	// Field by field: the struct has padding, so it can't be hashed as raw bytes. Floats go through
+	// hash_murmur3_one_float, which treats -0/0 and every NaN as the same value (like the comparator).
+	const RD::SamplerState &s = p_key.state;
+	uint32_t h = hash_murmur3_one_64(uint64_t(p_key.device));
+	h = hash_murmur3_one_32(s.mag_filter, h);
+	h = hash_murmur3_one_32(s.min_filter, h);
+	h = hash_murmur3_one_32(s.mip_filter, h);
+	h = hash_murmur3_one_32(s.repeat_u, h);
+	h = hash_murmur3_one_32(s.repeat_v, h);
+	h = hash_murmur3_one_32(s.repeat_w, h);
+	h = hash_murmur3_one_float(s.lod_bias, h);
+	h = hash_murmur3_one_32(s.use_anisotropy, h);
+	h = hash_murmur3_one_float(s.anisotropy_max, h);
+	h = hash_murmur3_one_32(s.enable_compare, h);
+	h = hash_murmur3_one_32(s.compare_op, h);
+	h = hash_murmur3_one_float(s.min_lod, h);
+	h = hash_murmur3_one_float(s.max_lod, h);
+	h = hash_murmur3_one_32(s.border_color, h);
+	h = hash_murmur3_one_32(s.unnormalized_uvw, h);
+	return hash_fmix32(h);
+}
+
+bool RenderingWeaver::SamplerKeyComparator::compare(const SamplerKey &p_a, const SamplerKey &p_b)
+{
+	const RD::SamplerState &a = p_a.state;
+	const RD::SamplerState &b = p_b.state;
+	return p_a.device == p_b.device &&
+			a.mag_filter == b.mag_filter && a.min_filter == b.min_filter && a.mip_filter == b.mip_filter &&
+			a.repeat_u == b.repeat_u && a.repeat_v == b.repeat_v && a.repeat_w == b.repeat_w &&
+			Math::is_same(a.lod_bias, b.lod_bias) && a.use_anisotropy == b.use_anisotropy &&
+			Math::is_same(a.anisotropy_max, b.anisotropy_max) &&
+			a.enable_compare == b.enable_compare && a.compare_op == b.compare_op &&
+			Math::is_same(a.min_lod, b.min_lod) && Math::is_same(a.max_lod, b.max_lod) &&
+			a.border_color == b.border_color && a.unnormalized_uvw == b.unnormalized_uvw;
+}
+
+RID RenderingWeaver::acquire_sampler(RenderingDevice *p_device, const RD::SamplerState &p_state)
+{
+	ERR_FAIL_NULL_V_MSG(p_device, RID(), "Samplers need a RenderingDevice (the Compatibility renderer has none).");
+
+	MutexLock lock(samplers_mutex);
+	const SamplerKey key = { p_device, p_state };
+	if (CachedSampler *cached = samplers.getptr(key))
+	{
+		cached->references++;
+		return cached->rid;
+	}
+
+	const RID rid = p_device->sampler_create(p_state);
+	ERR_FAIL_COND_V(!rid.is_valid(), RID());
+	samplers.insert(key, { rid, 1 });
+	sampler_keys.insert(rid, key);
+	return rid;
+}
+
+void RenderingWeaver::release_sampler(const RID &p_sampler)
+{
+	MutexLock lock(samplers_mutex);
+	const SamplerKey *key = sampler_keys.getptr(p_sampler);
+	ERR_FAIL_NULL_MSG(key, "This RID is not a sampler from RenderingWeaver::acquire_sampler().");
+
+	CachedSampler *cached = samplers.getptr(*key);
+	ERR_FAIL_NULL(cached);
+	if (--cached->references > 0) return;
+
+	RenderingDevice *device = key->device;
+	samplers.erase(*key);
+	sampler_keys.erase(p_sampler); // Invalidates key.
+	device->free_rid(p_sampler);
 }
 
 

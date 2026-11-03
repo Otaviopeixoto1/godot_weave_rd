@@ -97,6 +97,20 @@ void WeaverWebNode::end_capture() {
 	WeaverProfiler::end_capture();
 }
 
+Ref<WeaverRenderContext> WeaverWebNode::get_render_context() {
+	if (render_context.is_null()) {
+		render_context.instantiate();
+	}
+	return render_context;
+}
+
+void WeaverWebNode::free_render_context() {
+	if (render_context.is_valid()) {
+		render_context->free_resources();
+		render_context.unref();
+	}
+}
+
 
 void WeaverWebNode::_bind_methods()
 {
@@ -130,6 +144,8 @@ void WeaverWebNode::_bind_methods()
 
 	ClassDB::bind_method(D_METHOD("begin_capture", "name"), &WeaverWebNode::begin_capture);
 	ClassDB::bind_method(D_METHOD("end_capture"), &WeaverWebNode::end_capture);
+
+	ClassDB::bind_method(D_METHOD("get_render_context"), &WeaverWebNode::get_render_context);
 
 	GDVIRTUAL_BIND(_render, "stage", "render_data");
 	GDVIRTUAL_BIND(_setup);

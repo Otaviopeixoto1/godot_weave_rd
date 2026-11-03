@@ -1,8 +1,11 @@
 #pragma once
 
 #include "core/object/object.h"
+#include "core/os/mutex.h"
 #include "core/templates/hash_map.h"
+#include "core/templates/local_vector.h"
 #include "core/variant/typed_array.h"
+#include "servers/rendering/rendering_device.h"
 
 #include "resources/weaver_web.h"
 #include "resources/weaver_slot.h"
@@ -67,6 +70,13 @@ public:
 
 	const HashMap<ObjectID, CameraBinding> &get_camera_bindings() const { return camera_nests; }
 
+	// Samplers shared by every WeaverRenderContext, one per distinct state per RenderingDevice. They are refcounted:
+	// acquire_sampler() adds a reference and release_sampler() drops one. The last release frees the sampler on its device,
+	// so every reference to a sampler must be released before its device is freed.
+	// Call them where the device is used (the render thread for the main device).
+	RID acquire_sampler(RenderingDevice *p_device, const RD::SamplerState &p_state);
+	void release_sampler(const RID &p_sampler);
+
 protected:
 	static void _bind_methods();
 
@@ -83,6 +93,29 @@ private:
 	HashMap<ObjectID, WeaverSpiderInstance *> spider_instances;
 
 	bool resolve_queued = false;
+
+	struct SamplerKey
+	{
+		RenderingDevice *device = nullptr;
+		RD::SamplerState state;
+	};
+	struct SamplerKeyHasher
+	{
+		static uint32_t hash(const SamplerKey &p_key);
+	};
+	struct SamplerKeyComparator
+	{
+		static bool compare(const SamplerKey &p_a, const SamplerKey &p_b);
+	};
+	struct CachedSampler
+	{
+		RID rid;
+		uint32_t references = 0;
+	};
+
+	HashMap<SamplerKey, CachedSampler, SamplerKeyHasher, SamplerKeyComparator> samplers;
+	HashMap<RID, SamplerKey> sampler_keys; // Reverse lookup for release_sampler().
+	Mutex samplers_mutex;
 
 	void _queue_resolve();
 	void _flush();

@@ -19,16 +19,6 @@ WeaverSpiderInstance::~WeaverSpiderInstance()
 	_teardown();
 }
 
-// Runs on the render thread. The node copies are released when the bound array is, after their cleanup.
-static void _cleanup_nodes(const Array &p_instances)
-{
-	for (int i = 0; i < p_instances.size(); i++)
-	{
-		Ref<WeaverWebNode> instance = p_instances[i];
-		instance->cleanup();
-	}
-}
-
 void WeaverSpiderInstance::_build()
 {
 	RenderingServer *rs = RenderingServer::get_singleton();
@@ -72,6 +62,16 @@ void WeaverSpiderInstance::_build()
 	compositor = rs->compositor_create();
 	rs->compositor_set_compositor_effects(compositor, effect_rids);
 	rs->camera_set_compositor(camera_rid, compositor);
+}
+
+// Runs on the render thread. The node copies are released when the bound array is, after their cleanup and the
+// freeing of what their render context owns.
+static void _cleanup_nodes(const Array &p_instances) {
+	for (int i = 0; i < p_instances.size(); i++) {
+		Ref<WeaverWebNode> instance = p_instances[i];
+		instance->cleanup();
+		instance->free_render_context();
+	}
 }
 
 void WeaverSpiderInstance::_teardown()

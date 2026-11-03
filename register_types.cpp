@@ -10,6 +10,9 @@
 #include "src/resources/weaver_spider.h"
 #include "src/resources/weaver_web_node.h"
 
+#include "src/rendering/weaver_render_context.h"
+#include "src/rendering/weaver_shader_reflection.h"
+
 #include "src/nodes/weaver_spinner.h"
 #include "src/nodes/weaver_view_anchor.h"
 #include "src/nodes/weaver_spider_nest.h"
@@ -37,6 +40,9 @@ void initialize_godot_weave_rd_module(ModuleInitializationLevel p_level)
 		ClassDB::register_abstract_class<WeaverSlot>();
 		ClassDB::register_class<WeaverViewSlot>();
 		ClassDB::register_class<WeaverCameraSlot>();
+
+		ClassDB::register_class<WeaverShaderReflection>();
+		ClassDB::register_class<WeaverRenderContext>();
 
 		ClassDB::register_class<WeaverWebNode>();
 		ClassDB::register_class<WeaverSpider>();
