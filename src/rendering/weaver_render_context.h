@@ -10,19 +10,14 @@ class RDSamplerState;
 
 //
 // WeaverRenderContext owns the GPU objects of one WeaverWebNode copy (one per camera), so the node doesn't have to free
-// them by hand: the runtime calls free_resources() on the render thread right after the node's cleanup().
+// them by hand: the runtime calls free_resources() on the render thread right after the node cleanup().
 //
-// It only creates and owns objects. Pipelines, uniform sets and compute/draw lists stay with the user, and every helper
+// It only creates and owns objects. Pipelines, uniform sets and compute/draw lists stay with the user and every helper
 // returns a plain RID, so the regular RenderingDevice API keeps working alongside it.
 // - Owned RIDs are freed in reverse creation order. Don't free them by hand: use release() instead.
-// - Shaders are compiled once per context. Freeing a shader also frees the pipelines and uniform sets made from it,
-//   so pipelines created from get_shader_rid() need no cleanup.
-// - Samplers are created on the context's device and shared by every context on that device (RenderingWeaver keeps
-//   one per distinct state). The context holds one reference to each sampler it got, and drops it in free_resources().
-//   Those references count as owned RIDs.
-//
-// Like the RenderingDevice itself, call it from the render thread (setup(), render() and cleanup() of a node).
-//
+// - Shaders are compiled once per context. Freeing a shader also frees the pipelines and uniform sets made from it.
+// - Samplers are created on the context's device and are managed and shared by every context on that device. 
+// 
 class WeaverRenderContext : public RefCounted
 {
 	GDCLASS(WeaverRenderContext, RefCounted);

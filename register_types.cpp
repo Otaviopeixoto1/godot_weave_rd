@@ -12,6 +12,9 @@
 
 #include "src/rendering/weaver_render_context.h"
 #include "src/rendering/weaver_shader_reflection.h"
+#include "src/rendering/weaver_shader.h"
+#include "src/rendering/weaver_push_constants.h"
+#include "src/rendering/weaver_specialization.h"
 
 #include "src/nodes/weaver_spinner.h"
 #include "src/nodes/weaver_view_anchor.h"
@@ -43,6 +46,9 @@ void initialize_godot_weave_rd_module(ModuleInitializationLevel p_level)
 
 		ClassDB::register_class<WeaverShaderReflection>();
 		ClassDB::register_class<WeaverRenderContext>();
+		ClassDB::register_class<WeaverPushConstants>();
+		ClassDB::register_class<WeaverSpecialization>();
+		ClassDB::register_class<WeaverShader>();
 
 		ClassDB::register_class<WeaverWebNode>();
 		ClassDB::register_class<WeaverSpider>();
